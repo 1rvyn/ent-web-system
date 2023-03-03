@@ -74,14 +74,16 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	c.Cookie(&fiber.Cookie{
-		Name:     "session",
-		Value:    token,       // Replace with a unique session ID
-		Domain:   "localhost", // Replace with your domain name
-		Path:     "/",
-		HTTPOnly: true,
+		Name:   "session",
+		Value:  token,       // Replace with a unique session ID
+		Domain: "localhost", // Replace with your domain name
+		Path:   "/",
+		// HTTPOnly: true,
 		SameSite: "None",
 		MaxAge:   3600, // Expires in 1 hour
 	})
+
+	// TODO: ensure that the sessions are safe
 
 	return c.JSON(fiber.Map{
 		"message": "successfully logged in",
