@@ -1,6 +1,7 @@
 package main
 
 import (
+	"enterpriseweb/database"
 	"enterpriseweb/routes"
 	"fmt"
 	"time"
@@ -15,6 +16,7 @@ import (
 const SecretKey = "cookies are yum"
 
 func main() {
+	database.ConnectDb()
 
 	engine := html.New("./views", ".html")
 
