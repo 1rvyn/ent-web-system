@@ -44,7 +44,22 @@ func main() {
 func setupRoutes(app *fiber.App) {
 	app.Get("/", routes.Home)
 	app.Post("/login", Login)
+	app.Post("/register", Register)
 
+}
+
+func Register(c *fiber.Ctx) error {
+	var registerData map[string]string
+
+	if err := c.BodyParser(&registerData); err != nil {
+		return err
+	}
+
+	fmt.Println("Register this: ", registerData)
+
+	return c.JSON(fiber.Map{
+		"message": "successfully registered",
+	})
 }
 
 func Login(c *fiber.Ctx) error {
