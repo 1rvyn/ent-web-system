@@ -24,6 +24,10 @@
 }
 
 
+.error {
+  border-color: red;
+  color: red;
+}
 
 @keyframes logo-spin {
   from {

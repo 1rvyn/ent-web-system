@@ -47,7 +47,7 @@ function Register() {
     <div className="container mt-5">
       <h1>Register</h1>
       {errorMessage && (
-        <Alert variant="danger" className="mt-3">
+        <Alert variant="danger" className="error mt-3">
           {errorMessage}
         </Alert>
       )}
