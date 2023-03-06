@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { Form, Button } from 'react-bootstrap';
+import { Form, Button, Alert } from 'react-bootstrap';
 
 function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    setErrorMessage(null);
+
     if (password !== confirmPassword) {
-      // Show an error message if the passwords do not match
-      console.error('Passwords do not match');
+      setErrorMessage('Passwords do not match');
       return;
     }
 
@@ -24,17 +26,31 @@ function Register() {
       credentials: 'include',
     })
       .then(response => {
-        // Handle response
-        console.log(response)
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.message) {
+          setErrorMessage(data.message);
+        } else {
+          // Handle successful registration
+        }
       })
       .catch(error => {
-        // Handle error
+        setErrorMessage(error.message);
       });
   };
 
   return (
     <div className="container mt-5">
       <h1>Register</h1>
+      {errorMessage && (
+        <Alert variant="danger" className="mt-3">
+          {errorMessage}
+        </Alert>
+      )}
       <Form onSubmit={handleSubmit}>
         <Form.Group controlId="formBasicEmail">
           <Form.Label>Email address</Form.Label>
