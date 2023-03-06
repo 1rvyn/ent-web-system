@@ -4,16 +4,17 @@ import './App.css'
 import AppRouter from './AppRouter'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [activeRoute, setActiveRoute] = useState(window.location.pathname);
 
   return (
     <div className="App">
       <header className="App-header">
 
-    <ul id='nav-list'>
-      <li><a href='/'>Home</a></li>
-      <li><a href='/login'>Login</a></li>
-    </ul>
+      <ul id='nav-list'>
+          <li><a className={activeRoute === '/' ? 'active' : ''} href='/' onClick={() => setActiveRoute('/')}>Home</a></li>
+          <li><a className={activeRoute === '/login' ? 'active' : ''} href='/login' onClick={() => setActiveRoute('/login')}>Login</a></li>
+          <li><a className={activeRoute === '/register' ? 'active' : ''} href='/register' onClick={() => setActiveRoute('/register')}>Register</a></li>
+        </ul>
 
     </header>
     <AppRouter />
