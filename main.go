@@ -2,11 +2,13 @@ package main
 
 import (
 	"enterpriseweb/database"
+	"enterpriseweb/models"
 	"enterpriseweb/routes"
 	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"gorm.io/gorm"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html"
@@ -57,7 +59,31 @@ func Register(c *fiber.Ctx) error {
 		return err
 	}
 
-	fmt.Println("Register this: ", registerData)
+	existingUser := &models.Users{}
+
+	if err := database.Database.Db.Where("email = ?", registerData["email"]).First(existingUser).Error; err != nil {
+		if err != gorm.ErrRecordNotFound {
+			return err
+		}
+	} else {
+		return c.JSON(fiber.Map{
+			"success": false,
+			"message": "email already in use",
+		})
+	}
+
+	// TODO: hash the password + send email verification
+
+	user := &models.Users{
+		Email:    registerData["email"],
+		Password: registerData["password"],
+	}
+
+	if err := database.Database.Db.Create(&user).Error; err != nil {
+		return err
+	}
+
+	fmt.Println("Registered this: ", registerData)
 
 	return c.JSON(fiber.Map{
 		"message": "successfully registered",
