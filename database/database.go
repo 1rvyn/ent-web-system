@@ -16,14 +16,17 @@ type Dbinstance struct {
 
 var host = "localhost"
 var port = "5432"
-var user = "postgres"
+var user = "irvyn"
 var password = "password"
 var dbname = "postgres"
 
 var Database Dbinstance
 
+// docker build -t postgres .
+
+// docker run --name some-postgres -e POSTGRES_PASSWORD=password -d postgres
 func ConnectDb() {
-	psqlconn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	psqlconn := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable", user, password, host, port, dbname)
 
 	db, err := gorm.Open(postgres.Open(psqlconn), &gorm.Config{})
 	if err != nil {
