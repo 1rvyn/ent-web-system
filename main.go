@@ -148,7 +148,7 @@ func Login(c *fiber.Ctx) error {
 		Value:  token,       // Replace with a unique session ID
 		Domain: "localhost", // Replace with your domain name
 		Path:   "/",
-		// HTTPOnly: true,
+		// HTTPOnly: true, // this allows the cookie to be accessed by the frontend javascript
 		SameSite: "None",
 		MaxAge:   3600, // Expires in 1 hour
 	})
