@@ -100,6 +100,33 @@ func Login(c *fiber.Ctx) error {
 	// hande login
 	fmt.Println("Login", loginData)
 
+	user := &models.Users{}
+
+	// get user from DB & check if the email exists + matches
+	if err := database.Database.Db.Where("email = ?", loginData["email"]).First(user).Error; err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"success": false,
+			"message": "email not found",
+		})
+	}
+
+	//TODO: Hashinput password and compare against hashed stored passwords
+
+	//TODO: Store / create a session inside redis
+
+	// if the user.password (db) doesnt = the loginData["password"] (form)
+	if user.Password != loginData["password"] {
+		return c.JSON(fiber.Map{
+			"success": false,
+			"message": "incorrect password",
+		})
+	}
+
+	fmt.Println("login was successful - ", user)
+
+	// the rest of this code will run if the email matches & the password is correct
+
 	// make a cookie for the user
 
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
