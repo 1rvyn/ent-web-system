@@ -1,21 +1,34 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+function Home(props) {
 
-function Home({ isLoggedIn }) {
+  const { isLoggedIn } = props;
+
+
+  // console.log("logged in state: ", isLoggedIn)
+  // useEffect(() => {
+  //   const sessionCookie = document.cookie
+  //     .split('; ')
+  //     .find(row => row.startsWith('session='))
+  //     ?.split('=')[1];
+  //   console.log(sessionCookie);
+
+
+  //   return () => {
+  //     // Cleanup function to clear previous side effects
+  //     console.log('Cleaning up ');
+  //   };
+  // }, []);
   return (
-    <div className="container mt-5">
+    <div>
+      <h1>Home</h1>
       {isLoggedIn ? (
-        <div>
-          <h1>Welcome back!</h1>
-          <p>You are now authenticated.</p>
-        </div>
+        <p>You are logged in. Welcome back!</p>
       ) : (
-        <div>
-          <h1>Welcome to my website!</h1>
-          <p>Please log in to access the protected content.</p>
-        </div>
+        <p>Please log in to access additional features.</p>
       )}
     </div>
   );
 }
+
 
 export default Home;

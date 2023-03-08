@@ -38,7 +38,7 @@ function App() {
           )}
         </ul>
       </header>
-      <AppRouter />
+      <AppRouter isLoggedIn={isLoggedIn} />
     </div>
   );
 }

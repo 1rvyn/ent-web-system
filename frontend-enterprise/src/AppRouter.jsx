@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './Home';
 import Login from './Login';
 import Register from './Register';
+import Profile from './Profile';
 
 
 
@@ -12,6 +13,8 @@ function AppRouter ({ isLoggedIn }) {
     <BrowserRouter>
         <Routes>
             <Route path="/" element={<Home isLoggedIn={isLoggedIn} />} />
+
+            <Route path="/profile" element={<Profile isLoggedIn={isLoggedIn} />} />
 
             <Route path="/login" element={<Login />} />
 
