@@ -7,12 +7,11 @@ import Register from './Register';
 
 
 
-function AppRouter () {
+function AppRouter ({ isLoggedIn }) {
   return (
     <BrowserRouter>
-
         <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Home isLoggedIn={isLoggedIn} />} />
 
             <Route path="/login" element={<Login />} />
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 
 function Login() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -18,6 +19,10 @@ function Login() {
     })
       .then(response => {
         // Handle response
+        if(response.status === 200){
+          console.log("logged in, setting state")
+          redirect("/")
+        }
         console.log(response)
       })
       .catch(error => {
