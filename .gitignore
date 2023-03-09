@@ -2,3 +2,4 @@
 tmp/*
 *.iml
 .air.toml
+.env

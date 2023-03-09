@@ -3,10 +3,15 @@ module enterpriseweb
 go 1.20
 
 require (
+	github.com/gofiber/fiber/v2 v2.42.0
+	github.com/gofiber/template v1.7.5
+	github.com/golang-jwt/jwt v3.2.2+incompatible
+	gorm.io/driver/postgres v1.4.8
+	gorm.io/gorm v1.24.2
+)
+
+require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
-	github.com/gofiber/fiber/v2 v2.42.0 // indirect
-	github.com/gofiber/template v1.7.5 // indirect
-	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
@@ -25,9 +30,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.44.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
-	golang.org/x/crypto v0.6.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
-	gorm.io/driver/postgres v1.4.8 // indirect
-	gorm.io/gorm v1.24.2 // indirect
+	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
 )

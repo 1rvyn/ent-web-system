@@ -4,7 +4,9 @@ import (
 	"enterpriseweb/database"
 	"enterpriseweb/models"
 	"enterpriseweb/routes"
+	"enterpriseweb/utils"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -15,10 +17,13 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-const SecretKey = "cookies are yum"
+// load the env variables from the .env file
+var SecretKey = os.Getenv("SECRET_KEY")
+var SALT = os.Getenv("SALT")
 
 func main() {
 	database.ConnectDb()
+	fmt.Println("SALT IS", SALT)
 
 	engine := html.New("./views", ".html")
 
@@ -72,11 +77,27 @@ func Register(c *fiber.Ctx) error {
 		})
 	}
 
+	hashedPassword := make(chan []byte) // channel to recieve the hashed password
+
+	go func() {
+		hashedPassword <- utils.HashPassword(registerData["password"], []byte(SALT))
+		close(hashedPassword)
+	}()
+
+	encryptedPassword := <-hashedPassword
+
+	if encryptedPassword == nil {
+		return c.JSON(fiber.Map{
+			"success": false,
+			"message": "could not encrypt password",
+		})
+	}
+
 	// TODO: hash the password + send email verification
 
-	user := &models.Users{
+	user := models.Users{
 		Email:    registerData["email"],
-		Password: registerData["password"],
+		Password: encryptedPassword,
 	}
 
 	if err := database.Database.Db.Create(&user).Error; err != nil {
@@ -116,12 +137,13 @@ func Login(c *fiber.Ctx) error {
 	//TODO: Store / create a session inside redis
 
 	// if the user.password (db) doesnt = the loginData["password"] (form)
-	if user.Password != loginData["password"] {
-		return c.JSON(fiber.Map{
-			"success": false,
-			"message": "incorrect password",
-		})
-	}
+
+	// if user.Password != loginData["password"] {
+	// 	return c.JSON(fiber.Map{
+	// 		"success": false,
+	// 		"message": "incorrect password",
+	// 	})
+	// }
 
 	fmt.Println("login was successful - ", user)
 
@@ -155,8 +177,9 @@ func Login(c *fiber.Ctx) error {
 
 	// TODO: ensure that the sessions are safe
 
+	// redirect and return success
 	return c.JSON(fiber.Map{
-		"message": "successfully logged in",
+		"success": true,
+		"message": "login successful",
 	})
-
 }
