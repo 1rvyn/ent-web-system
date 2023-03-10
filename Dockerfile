@@ -10,11 +10,8 @@ COPY . .
 # Install app dependencies
 RUN npm install
 
-# # Build the app
-# RUN npm run dev
-
 # Expose the port the app listens on
 EXPOSE 5173
 
 # Start the app
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "dev", "--", "--host"]
