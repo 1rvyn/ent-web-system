@@ -18,7 +18,7 @@ var host = "localhost"
 var port = "5432"
 var user = "irvyn"
 var password = "password"
-var dbname = "postgres"
+var dbname = "enterprise"
 
 var Database Dbinstance
 
