@@ -60,6 +60,8 @@ func setupRoutes(app *fiber.App) {
 func Register(c *fiber.Ctx) error {
 	var registerData map[string]string
 
+	fmt.Println("register data... ", registerData)
+
 	if err := c.BodyParser(&registerData); err != nil {
 		return err
 	}
