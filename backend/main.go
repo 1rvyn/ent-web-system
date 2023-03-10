@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"enterpriseweb/database"
 	"enterpriseweb/models"
 	"enterpriseweb/routes"
 	"enterpriseweb/utils"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -34,7 +37,7 @@ func main() {
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://localhost:5173", // Replace with your React app's URL
 		AllowHeaders:     "Origin, Content-Type, Accept, Set-Cookie, Cookie , Content-Type",
-		AllowMethods:     "POST, OPTIONS",
+		AllowMethods:     "POST, OPTIONS, GET, PUT, DELETE, PREFLIGHT",
 		AllowCredentials: true,
 	}))
 
@@ -54,7 +57,63 @@ func setupRoutes(app *fiber.App) {
 	app.Get("/", routes.Home)
 	app.Post("/login", Login)
 	app.Post("/register", Register)
+	app.Get("/projects", Project)
+	app.Post("/test", Test)
+}
 
+func Test(c *fiber.Ctx) error {
+	// print all cookies
+
+	cookieHeader := c.Request().Header.Peek("cookie")
+	if cookieHeader != nil {
+		cookies := string(cookieHeader)
+		fmt.Println("cookies: \n", cookies)
+	}
+
+	// Get the session cookie from the request context
+	sessionCookie := c.Cookies("session")
+
+	fmt.Println("session cookieeeeeeee: \n", sessionCookie)
+
+	return c.JSON(fiber.Map{
+		"message": "test",
+	})
+}
+
+type Projects struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+var projectList = []Projects{
+	{ID: 1, Name: "Project 1"},
+	{ID: 2, Name: "Project 2"},
+	{ID: 3, Name: "Project 3"},
+}
+
+func Project(c *fiber.Ctx) error {
+	// Get the session cookie from the request context
+	sessionCookie := c.Cookies("session")
+
+	fmt.Println("session cookie at the GET projects endpoint: \n", sessionCookie)
+
+	// Check if user is logged in
+	if sessionCookie == "" {
+		return c.Status(401).JSON(fiber.Map{
+			"message": "not logged in",
+		})
+	}
+
+	// Retrieve projects from database or file
+	projects := projectList
+
+	// Format projects as a JSON response
+	response, err := json.Marshal(projects)
+	if err != nil {
+		return err
+	}
+
+	return c.Send(response)
 }
 
 func Register(c *fiber.Ctx) error {
@@ -132,56 +191,60 @@ func Login(c *fiber.Ctx) error {
 			"success": false,
 			"message": "email not found",
 		})
+	} else {
+		// check the hashed password
+
+		hashedPassword := make(chan []byte) // channel to recieve the hashed password
+
+		go func() {
+			hashedPassword <- utils.HashPassword(loginData["password"], []byte(SALT))
+			close(hashedPassword)
+		}()
+
+		encryptedPassword := <-hashedPassword
+
+		if !bytes.Equal(user.Password, encryptedPassword) {
+			return c.Status(401).JSON(fiber.Map{
+				"message": "incorrect password",
+			})
+		} else {
+			fmt.Println("passwords match")
+			// make and send cookie - with claims
+
+			// TODO: Make a session and store it in redis with the users details
+			claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+				Issuer:    strconv.Itoa(int(user.ID)),
+				ExpiresAt: time.Now().Add(time.Hour * 24).Unix(), //1 day
+			})
+
+			token, err := claims.SignedString([]byte(SecretKey))
+
+			if err != nil {
+				c.Status(fiber.StatusInternalServerError)
+				return c.JSON(fiber.Map{
+					"message": "could not create cookie",
+				})
+			}
+
+			cookie := fiber.Cookie{
+				Name:   "session",
+				Value:  token,
+				Domain: "localhost", // Replace with your domain name
+				Path:   "/",
+				// HTTPOnly: true,
+				SameSite: "None",
+				MaxAge:   86400, // 1 day
+			}
+
+			c.Cookie(&cookie)
+
+			fmt.Println("Cookie is: ", cookie)
+
+			return c.JSON(fiber.Map{
+				"success": true,
+				"message": "login was successful",
+			})
+
+		}
 	}
-
-	//TODO: Hashinput password and compare against hashed stored passwords
-
-	//TODO: Store / create a session inside redis
-
-	// if the user.password (db) doesnt = the loginData["password"] (form)
-
-	// if user.Password != loginData["password"] {
-	// 	return c.JSON(fiber.Map{
-	// 		"success": false,
-	// 		"message": "incorrect password",
-	// 	})
-	// }
-
-	fmt.Println("login was successful - ", user)
-
-	// the rest of this code will run if the email matches & the password is correct
-
-	// make a cookie for the user
-
-	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		Issuer:    loginData["email"],
-		ExpiresAt: time.Now().Add(time.Hour * 24).Unix(), //1 day
-	})
-
-	token, err := claims.SignedString([]byte(SecretKey))
-
-	if err != nil {
-		c.Status(fiber.StatusInternalServerError)
-		return c.JSON(fiber.Map{
-			"message": "could not create cookie",
-		})
-	}
-
-	c.Cookie(&fiber.Cookie{
-		Name:   "session",
-		Value:  token,       // Replace with a unique session ID
-		Domain: "localhost", // Replace with your domain name
-		Path:   "/",
-		// HTTPOnly: true, // this allows the cookie to be accessed by the frontend javascript
-		SameSite: "None",
-		MaxAge:   3600, // Expires in 1 hour
-	})
-
-	// TODO: ensure that the sessions are safe
-
-	// redirect and return success
-	return c.JSON(fiber.Map{
-		"success": true,
-		"message": "login successful",
-	})
 }

@@ -3,3 +3,5 @@ tmp/*
 *.iml
 .air.toml
 .env
+backend/tmp/build-errors.log
+backend/tmp/main
