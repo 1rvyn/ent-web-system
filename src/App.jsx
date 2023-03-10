@@ -49,6 +49,15 @@ function App() {
                     Logout
                   </a>
                 </li>
+                <li>
+                  <a
+                    className={activeRoute === '/test' ? 'active' : ''}
+                    href="/test"
+                    onClick={() => setActiveRoute('/test')}
+                  >
+                    Test
+                  </a>
+                </li>
               </>
             ) : (
               <>
