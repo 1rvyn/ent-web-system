@@ -8,7 +8,7 @@ function Home(props) {
     <div>
       <h1>Home</h1>
       {isLoggedIn ? (
-        <p>You are logged in. Welcome back!</p>
+        <p>You are logged in. Weelcome back!</p>
       ) : (
         <p>Please log in to access additional features.</p>
       )}
