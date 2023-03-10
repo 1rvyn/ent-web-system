@@ -14,11 +14,11 @@ type Dbinstance struct {
 	Db *gorm.DB
 }
 
-var host = "localhost"
+var host = "db"
 var port = "5432"
-var user = "irvyn"
+var user = "postgres"
 var password = "password"
-var dbname = "enterprise"
+var dbname = "postgres"
 
 var Database Dbinstance
 

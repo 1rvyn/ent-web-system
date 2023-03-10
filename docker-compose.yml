@@ -5,6 +5,12 @@ services:
     build: ./frontend
     ports:
       - "5173:5173"
+    env_file:
+      - ./frontend/.env
+    networks:
+      shared:
+        aliases:
+          - frontend
 
   backend:
     build: ./backend
@@ -12,12 +18,33 @@ services:
       - "8085:8085"
     depends_on:
       - db
+    env_file:
+      - ./backend/.env
     environment:
       POSTGRES_HOST: db
+    networks:
+      shared:
+        aliases:
+          - backend
+    command: bash -c "sleep 10 && ./main"
 
   db:
     image: postgres-db
     ports:
       - "5432:5432"
     environment:
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "postgres", "-h", "0.0.0.0"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    networks:
+      shared:
+        aliases:
+          - db
+
+networks:
+  shared:

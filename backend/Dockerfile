@@ -14,7 +14,7 @@ ENV SECRET_KEY=$SECRET_KEY \
 # Build the Go API
 RUN go build -o main .
 
-# Expose port 8080 for the API
+# Expose port 8085
 EXPOSE 8085
 
 # Run the Go API when the container launches
