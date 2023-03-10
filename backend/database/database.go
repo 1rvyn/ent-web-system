@@ -14,17 +14,14 @@ type Dbinstance struct {
 	Db *gorm.DB
 }
 
-var host = "localhost"
+var host = "localhost" // "db" when docker-compose
 var port = "5432"
-var user = "irvyn"
+var user = "irvyn" // "postgres" when docker-compose
 var password = "password"
 var dbname = "postgres"
 
 var Database Dbinstance
 
-// docker build -t postgres .
-
-// docker run --name some-postgres -e POSTGRES_PASSWORD=password -d postgres
 func ConnectDb() {
 	psqlconn := fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=disable", user, password, host, port, dbname)
 
