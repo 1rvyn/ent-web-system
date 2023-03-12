@@ -37,11 +37,11 @@ function App() {
               <>
                 <li>
                   <a
-                    className={activeRoute === '/profile' ? 'active' : ''}
-                    href="/profile"
-                    onClick={() => setActiveRoute('/profile')}
+                    className={activeRoute === '/projects' ? 'active' : ''}
+                    href="/projects"
+                    onClick={() => setActiveRoute('/projects')}
                   >
-                    Profile
+                    Projects
                   </a>
                 </li>
                 <li>
