@@ -111,12 +111,20 @@ func Project(c *fiber.Ctx) error {
 	projectData := map[string]interface{}{
 		"data": string(projectBytes),
 	}
+
+	fmt.Println("saving random key: ", key)
+
 	err = database.Redis.PutHMap(key, projectData)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("saving random key: ", key)
+	// get the Hmap and print it
+	hmap, err := database.Redis.GetHMap(key)
+	if err != nil {
+		return err
+	}
+	fmt.Println("hmap from REDIS QUERY: ", hmap)
 
 	return c.JSON(fiber.Map{
 		"message": "project",
