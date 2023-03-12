@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"enterpriseweb/database"
 	"enterpriseweb/models"
 	"enterpriseweb/routes"
@@ -57,7 +56,7 @@ func setupRoutes(app *fiber.App) {
 	app.Get("/", routes.Home)
 	app.Post("/login", Login)
 	app.Post("/register", Register)
-	app.Get("/projects", Project)
+	app.Post("/projects", Project)
 	app.Post("/test", Test)
 }
 
@@ -80,40 +79,26 @@ func Test(c *fiber.Ctx) error {
 	})
 }
 
-type Projects struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-}
-
-var projectList = []Projects{
-	{ID: 1, Name: "Project 1"},
-	{ID: 2, Name: "Project 2"},
-	{ID: 3, Name: "Project 3"},
-}
-
 func Project(c *fiber.Ctx) error {
-	// Get the session cookie from the request context
-	sessionCookie := c.Cookies("session")
+	// TODO save projects for each user in the database
+	var projects []map[string]interface{}
 
-	fmt.Println("session cookie at the GET projects endpoint: \n", sessionCookie)
-
-	// Check if user is logged in
-	if sessionCookie == "" {
-		return c.Status(401).JSON(fiber.Map{
-			"message": "not logged in",
-		})
-	}
-
-	// Retrieve projects from database or file
-	projects := projectList
-
-	// Format projects as a JSON response
-	response, err := json.Marshal(projects)
-	if err != nil {
+	if err := c.BodyParser(&projects); err != nil {
 		return err
 	}
 
-	return c.Send(response)
+	fmt.Println("projects: ", projects)
+
+	// Get the user ID from the cookie
+	cookieHeader := c.Request().Header.Peek("cookie")
+	if cookieHeader != nil {
+		cookies := string(cookieHeader)
+		fmt.Println("cookies: \n", cookies)
+	}
+
+	return c.JSON(fiber.Map{
+		"message": "project",
+	})
 }
 
 func Register(c *fiber.Ctx) error {
