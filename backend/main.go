@@ -2,11 +2,13 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"enterpriseweb/database"
 	"enterpriseweb/models"
 	"enterpriseweb/routes"
 	"enterpriseweb/utils"
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 	"time"
@@ -81,24 +83,44 @@ func Test(c *fiber.Ctx) error {
 }
 
 func Project(c *fiber.Ctx) error {
-	// TODO save projects for each user in the database
 	var projects []map[string]interface{}
 
 	if err := c.BodyParser(&projects); err != nil {
 		return err
 	}
 
-	fmt.Println("projects: ", projects)
-
-	// Get the user ID from the cookie
 	cookieHeader := c.Request().Header.Peek("cookie")
 	if cookieHeader != nil {
 		cookies := string(cookieHeader)
-		fmt.Println("cookies: \n", cookies)
+		fmt.Println("cookie from the Projects: \n", cookies)
 	}
+
+	fmt.Println("projects are: ", projects)
+
+	// Generate a random key for the hashmap
+	rand.Seed(time.Now().UnixNano())
+	key := strconv.Itoa(rand.Intn(100000))
+
+	// Convert the projects variable into a suitable structure
+	projectBytes, err := json.Marshal(projects)
+	if err != nil {
+		return err
+	}
+
+	// Store the projects array in Redis
+	projectData := map[string]interface{}{
+		"data": string(projectBytes),
+	}
+	err = database.Redis.PutHMap(key, projectData)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("saving random key: ", key)
 
 	return c.JSON(fiber.Map{
 		"message": "project",
+		"key":     key,
 	})
 }
 
