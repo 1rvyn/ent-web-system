@@ -169,7 +169,7 @@ function Projects(props) {
               <ul>
                 {projects.map((project, index) => (
                   <li key={index}>
-                    {project.type.charAt(0).toUpperCase() + project.type.slice(1)} Workers:{' '}
+                    {project.type && project.type.charAt(0).toUpperCase() + project.type.slice(1)} Workers:{' '}
                     {project.numWorkers} x {project.hourlyWage}$ / h x {project.numHours}h
                   </li>
                 ))}
@@ -181,7 +181,7 @@ function Projects(props) {
           </div>
         </>
       ) : (
-        <p>Please log in to access additional features.</p>
+        <p>Please log in to create projects.</p>
       )}
     </div>
   );
