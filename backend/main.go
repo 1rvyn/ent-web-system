@@ -25,6 +25,7 @@ var SALT = os.Getenv("SALT")
 
 func main() {
 	database.ConnectDb()
+	database.ConnectToRedis()
 	fmt.Println("SALT IS", SALT)
 
 	engine := html.New("./views", ".html")
