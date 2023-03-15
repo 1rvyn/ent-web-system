@@ -3,8 +3,10 @@ import React, { useState } from 'react';
 function Projects(props) {
   const [isFetching, setIsFetching] = useState(false);
   const [projects, setProjects] = useState([]);
+  const [createdProjects, setCreatedProjects] = useState([]);
   const [currentWorkerType, setCurrentWorkerType] = useState('intern');
   const [workerDetails, setWorkerDetails] = useState({
+    title: '',
     intern: { numWorkers: 0, hourlyWage: 0, numHours: 0 },
     junior: { numWorkers: 0, hourlyWage: 0, numHours: 0 },
     mid: { numWorkers: 0, hourlyWage: 0, numHours: 0 },
@@ -24,6 +26,9 @@ function Projects(props) {
       numHours: Number(currentDetails.numHours),
     };
 
+    // allow for titles to be added to projects
+
+
     updatedProjects.push(newWorker);
 
     setProjects(updatedProjects);
@@ -38,7 +43,14 @@ function Projects(props) {
   const handleCreateProject = async (event) => {
     event.preventDefault();
     setIsFetching(true);
-    console.log(JSON.stringify(projects))
+
+    const projectToCreate = {
+        title: workerDetails.title,
+        workers: projects
+    }
+
+    console.log("New project:", JSON.stringify(projectToCreate));
+
 
     try {
       const response = await fetch('http://localhost:8085/projects', {
@@ -47,7 +59,7 @@ function Projects(props) {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(projects),
+        body: JSON.stringify(projectToCreate),
         mode: 'cors',
       });
 
@@ -57,13 +69,13 @@ function Projects(props) {
       }
 
       const newProject = await response.json();
-      setProjects([...projects, newProject]);
+      // Update createdProjects state
+      setCreatedProjects([...createdProjects, newProject]);
       console.log(newProject)
     } catch (error) {
       console.error(error);
     } finally {
       setIsFetching(false);
-    
     }
   };
 
@@ -79,6 +91,14 @@ function Projects(props) {
         ...workerDetails[currentWorkerType],
         numWorkers: value,
       },
+    });
+  };
+
+  const handleTitleChange = (event) => {
+    const { value } = event.target;
+    setWorkerDetails({
+      ...workerDetails,
+      title: value,
     });
   };
 
@@ -165,13 +185,22 @@ function Projects(props) {
             <button onClick={handleAddWorker}>Add {currentWorkerType} Workers</button>
           </div>
           <div className="project-form">
+            <h3>Current project:</h3>
             <form onSubmit={handleCreateProject}>
+              <label>
+                Project Title:
+                <input type="text" value={workerDetails.title} onChange={handleTitleChange} />
+              </label>
+              <br />
               <ul>
                 {projects.map((project, index) => (
-                  <li key={index}>
-                    {project.type && project.type.charAt(0).toUpperCase() + project.type.slice(1)} Workers:{' '}
-                    {project.numWorkers} x {project.hourlyWage}$ / h x {project.numHours}h
-                  </li>
+                    <li key={index}>
+                      {project.numWorkers} x {project.type && project.type.charAt(0).toUpperCase() + project.type.slice(1)} Employees
+                      <br />
+                      {project.numHours}h/week | @ ${project.hourlyWage}/h
+                      <br />
+                      Total: ${project.numWorkers * project.numHours * project.hourlyWage}/h
+                    </li>
                 ))}
               </ul>
               <button type="submit" disabled={isFetching}>
@@ -179,6 +208,7 @@ function Projects(props) {
               </button>
             </form>
           </div>
+
         </>
       ) : (
         <p>Please log in to create projects.</p>
