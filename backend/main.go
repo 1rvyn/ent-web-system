@@ -24,6 +24,7 @@ import (
 // load the env variables from the .env file
 var SecretKey = os.Getenv("SECRET_KEY")
 var SALT = os.Getenv("SALT")
+var RedisKey = os.Getenv("REDIS_KEY")
 
 func main() {
 	database.ConnectDb()
@@ -61,6 +62,8 @@ func setupRoutes(app *fiber.App) {
 	app.Post("/register", Register)
 	app.Post("/projects", Project)
 	app.Post("/test", Test)
+
+	app.Post("/session", getUserfromSession)
 }
 
 func Test(c *fiber.Ctx) error {
@@ -233,7 +236,7 @@ func Login(c *fiber.Ctx) error {
 
 			// TODO: Make a session and store it in redis with the users details
 			claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-				Issuer:    strconv.Itoa(int(user.ID)),
+				Issuer:    string(rune(user.ID)),
 				ExpiresAt: time.Now().Add(time.Hour * 24).Unix(), //1 day
 			})
 
@@ -258,7 +261,34 @@ func Login(c *fiber.Ctx) error {
 
 			c.Cookie(&cookie)
 
-			fmt.Println("Cookie is: ", cookie)
+			fmt.Println("The cookie we just made is: ", cookie)
+
+			// Create a session and store it in redis
+
+			SToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+				Issuer:    string(rune(user.ID)),
+				ExpiresAt: time.Now().Add(time.Hour * 24).Unix(), //1 day
+			}).SignedString([]byte(RedisKey))
+
+			if err != nil {
+				c.Status(fiber.StatusInternalServerError)
+				return c.JSON(fiber.Map{
+					"message": "failed to create session",
+				})
+			}
+
+			session := make(map[string]interface{})
+			session["user_id"] = user.ID
+			session["email"] = user.Email
+			session["token"] = SToken
+			// create a new token
+
+			err = database.Redis.PutHMap(token, session)
+			if err != nil {
+				return err
+			} else {
+				fmt.Println("\nsuccessfully saved session to redis")
+			}
 
 			return c.JSON(fiber.Map{
 				"success": true,
@@ -267,4 +297,35 @@ func Login(c *fiber.Ctx) error {
 
 		}
 	}
+}
+
+func getUserfromSession(c *fiber.Ctx) error {
+	// get the users cookie
+	cookie := c.Cookies("jwt")
+
+	fmt.Println("the cookie is :", cookie)
+
+	// search the cookie value in redis to get the session
+	session, err := database.Redis.GetHMap(cookie)
+	if err != nil {
+		return err
+	}
+
+	// TODO: we need to validate the token (not a huge security risk but still)
+
+	fmt.Println("\nthe session we got from redis is :", session)
+
+	// get the user's ID from the session
+	userID := session["userID"]
+	sessionToken := session["sessionID"]
+
+	fmt.Println("\nthe userID is :", userID)
+
+	fmt.Println("\nthe sessionToken is :", sessionToken)
+
+	return c.JSON(fiber.Map{
+		"message": "successfully got user from session",
+		"userID":  userID,
+		"session": session,
+	})
 }
