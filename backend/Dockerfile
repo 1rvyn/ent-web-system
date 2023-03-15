@@ -8,9 +8,10 @@ COPY . /app
 
 # Set environment variables
 ENV SECRET_KEY=$SECRET_KEY \
-    SALT=$SALT 
+    SALT=$SALT \
+    REDIS_KEY=$REDIS_KEY 
 
-
+    
 # Build the Go API
 RUN go build -o main .
 

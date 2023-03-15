@@ -2,13 +2,11 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"enterpriseweb/database"
 	"enterpriseweb/models"
 	"enterpriseweb/routes"
 	"enterpriseweb/utils"
 	"fmt"
-	"math/rand"
 	"os"
 	"strconv"
 	"time"
@@ -87,56 +85,56 @@ func Test(c *fiber.Ctx) error {
 
 func Project(c *fiber.Ctx) error {
 	fmt.Println("Project endpoint hit")
-	var project map[string]interface{}
 
+	var project models.Project
 	if err := c.BodyParser(&project); err != nil {
 		return err
 	}
 
-	fmt.Println("project title:", project["title"])
-	fmt.Println("project workers:", project["workers"])
+	// Retrieve user ID
+	sessionCookie := c.Cookies("session")
 
-	cookieHeader := c.Request().Header.Peek("cookie")
-	if cookieHeader != nil {
-		cookies := string(cookieHeader)
-		fmt.Println("cookie from the Projects: \n", cookies)
+	if sessionCookie == "" {
+		return c.JSON(fiber.Map{
+			"message": "user not found",
+		})
 	}
 
-	// Generate a random key for the hashmap
-	rand.Seed(time.Now().UnixNano())
-	key := strconv.Itoa(rand.Intn(100000))
+	// search for the session in redis
+	session, err := database.Redis.GetHMap(sessionCookie)
+	if err != nil {
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": "failed to get session",
+		})
+	}
 
-	// Convert the projects variable into a suitable structure
-	projectBytes, err := json.Marshal(project)
+	userID := session["user_id"]
+
+	fmt.Println("user id: ", userID)
+
+	num, err := strconv.ParseUint(userID, 10, 0)
 	if err != nil {
 		return err
 	}
 
-	// Store the projects array in Redis
-	projectData := map[string]interface{}{
-		"data": string(projectBytes),
-	}
+	// TODO: Look into the use of pointers here - why? what is the difference?
+	uintValue := uint(num)
+	uintPointer := &uintValue
+	project.OwnerID = uintPointer
 
-	fmt.Println("saving random key: ", key)
-
-	err = database.Redis.PutHMap(key, projectData)
-	if err != nil {
-		return err
+	// Save the project to the database
+	if err := database.Database.Db.Create(&project).Error; err != nil {
+		return c.JSON(fiber.Map{
+			"message": "failed to save project",
+			"error":   err.Error(),
+		})
 	}
-
-	// get the Hmap and print it
-	hmap, err := database.Redis.GetHMap(key)
-	if err != nil {
-		return err
-	}
-	fmt.Println("hmap from REDIS QUERY: ", hmap)
 
 	return c.JSON(fiber.Map{
-		"message": "project",
-		"key":     key,
+		"message": "saved project",
 		"project": project,
 	})
-
 }
 
 func Register(c *fiber.Ctx) error {

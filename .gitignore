@@ -5,3 +5,4 @@ tmp/*
 .env
 backend/tmp/build-errors.log
 backend/tmp/main
+enterprise/backend/backend.env

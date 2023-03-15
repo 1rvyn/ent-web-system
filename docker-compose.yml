@@ -5,7 +5,7 @@ services:
     image: containrrr/watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    command: --interval 30 --cleanup backend frontend db redis
+    command: --interval 300 --cleanup backend frontend db redis
   frontend:
     build: ./frontend
     ports:
@@ -35,7 +35,7 @@ services:
       shared:
         aliases:
           - backend
-    command: bash -c "sleep 10 && ./main"
+    command: bash -c "sleep 2 && ./main"
 
   db:
     image: postgres-db
