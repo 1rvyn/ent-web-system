@@ -83,11 +83,15 @@ func Test(c *fiber.Ctx) error {
 }
 
 func Project(c *fiber.Ctx) error {
-	var projects []map[string]interface{}
+	fmt.Println("Project endpoint hit")
+	var project map[string]interface{}
 
-	if err := c.BodyParser(&projects); err != nil {
+	if err := c.BodyParser(&project); err != nil {
 		return err
 	}
+
+	fmt.Println("project title:", project["title"])
+	fmt.Println("project workers:", project["workers"])
 
 	cookieHeader := c.Request().Header.Peek("cookie")
 	if cookieHeader != nil {
@@ -95,14 +99,12 @@ func Project(c *fiber.Ctx) error {
 		fmt.Println("cookie from the Projects: \n", cookies)
 	}
 
-	fmt.Println("projects are: ", projects)
-
 	// Generate a random key for the hashmap
 	rand.Seed(time.Now().UnixNano())
 	key := strconv.Itoa(rand.Intn(100000))
 
 	// Convert the projects variable into a suitable structure
-	projectBytes, err := json.Marshal(projects)
+	projectBytes, err := json.Marshal(project)
 	if err != nil {
 		return err
 	}
@@ -129,7 +131,9 @@ func Project(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"message": "project",
 		"key":     key,
+		"project": project,
 	})
+
 }
 
 func Register(c *fiber.Ctx) error {
