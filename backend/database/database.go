@@ -14,9 +14,9 @@ type Dbinstance struct {
 	Db *gorm.DB
 }
 
-var host = "db" // "db" when docker-compose
+var host = "localhost" // "db" when docker-compose
 var port = "5432"
-var user = "postgres" // "postgres" when docker-compose
+var user = "irvyn" // "postgres" when docker-compose
 var password = "password"
 var dbname = "postgres"
 

@@ -21,7 +21,7 @@ func ConnectToRedis() {
 	fmt.Println("Connecting to Redis.....")
 
 	client := redis.NewClient(&redis.Options{
-		Addr:     "redis:6379", // Redis service name on the Docker network
+		Addr:     "localhost:6379", // Redis service name on the Docker network
 		Password: "",
 		DB:       0,
 	})
