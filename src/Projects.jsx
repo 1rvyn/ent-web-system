@@ -23,7 +23,7 @@ function Projects(props) {
     const hourlyWage =
         payRateMode === 'hourly'
             ? Number(currentDetails.hourlyWage)
-            : Number(currentDetails.hourlyWage || 0) / 8;
+            : Number(currentDetails.hourlyWage || 0);
 
     const newWorker = {
       type: currentWorkerType,
@@ -225,14 +225,8 @@ function Projects(props) {
                   <br />
                   <ul>
                     {projects.map((project, index) => {
-                      const totalHourlyCost =
-                          project.payRateMode === 'hourly'
-                              ? project.numWorkers * project.numHours * project.hourlyWage
-                              : project.numWorkers * project.numHours * (project.hourlyWage * 8);
-                      const totalDailyCost =
-                          project.payRateMode === 'hourly'
-                              ? project.numWorkers * project.numHours * project.hourlyWage * 5
-                              : project.numWorkers * project.numHours * project.hourlyWage;
+                      const totalHourlyCost = project.numWorkers * project.hourlyWage;
+                      const totalDailyCost = project.numWorkers * project.hourlyWage * 8;
 
                       return (
                           <li key={index}>
