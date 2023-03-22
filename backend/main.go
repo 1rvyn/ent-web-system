@@ -74,7 +74,7 @@ func VerifyUser(c *fiber.Ctx) error {
 
 	if sCookie == "" {
 		return c.JSON(fiber.Map{
-			"message": "unauthorized",
+			"message": false,
 		})
 	}
 
@@ -86,14 +86,14 @@ func VerifyUser(c *fiber.Ctx) error {
 	// fmt.Println("the user role is \n", session["user_role"])
 	if err != nil {
 		return c.JSON(fiber.Map{
-			"message": "unauthorized",
+			"message": false,
 		})
 	}
 	// fmt.Println("session: ", session)
 
 	if session == nil {
 		return c.JSON(fiber.Map{
-			"message": "unauthorized",
+			"message": false,
 		})
 	}
 
@@ -104,7 +104,7 @@ func VerifyUser(c *fiber.Ctx) error {
 		})
 	} else {
 		return c.JSON(fiber.Map{
-			"message": "unauthorized",
+			"message": false,
 		})
 	}
 
