@@ -8,10 +8,10 @@ function Projects(props) {
   const [currentWorkerType, setCurrentWorkerType] = useState('intern');
   const [workerDetails, setWorkerDetails] = useState({
     title: '',
-    intern: { numWorkers: 0, hourlyWage: 0, numHours: 0 },
-    junior: { numWorkers: 0, hourlyWage: 0, numHours: 0 },
-    mid: { numWorkers: 0, hourlyWage: 0, numHours: 0 },
-    senior: { numWorkers: 0, hourlyWage: 0, numHours: 0 },
+    intern: { numWorkers: 0, hourlyRate: 0, numHours: 0 },
+    junior: { numWorkers: 0, hourlyRate: 0, numHours: 0 },
+    mid: { numWorkers: 0, hourlyRate: 0, numHours: 0 },
+    senior: { numWorkers: 0, hourlyRate: 0, numHours: 0 },
   });
   const { isLoggedIn } = props;
 
@@ -20,15 +20,15 @@ function Projects(props) {
     const workerDetailsCopy = { ...workerDetails };
     const currentDetails = workerDetailsCopy[currentWorkerType];
 
-    const hourlyWage =
+    const hourlyRate =
         payRateMode === 'hourly'
-            ? Number(currentDetails.hourlyWage)
-            : Number(currentDetails.hourlyWage || 0);
+            ? Number(currentDetails.hourlyRate)
+            : Number(currentDetails.hourlyRate || 0);
 
     const newWorker = {
       type: currentWorkerType,
       numWorkers: Number(currentDetails.numWorkers),
-      hourlyWage: hourlyWage,
+      hourlyRate: hourlyRate,
       numHours: Number(currentDetails.numHours),
       payRateMode,
     };
@@ -40,7 +40,7 @@ function Projects(props) {
     setCurrentWorkerType('intern');
     setWorkerDetails({
       ...workerDetailsCopy,
-      [currentWorkerType]: { numWorkers: 0, hourlyWage: 0, numHours: 0 },
+      [currentWorkerType]: { numWorkers: 0, hourlyRate: 0, numHours: 0 },
     });
   };
 
@@ -127,7 +127,7 @@ function Projects(props) {
       ...workerDetails,
       [currentWorkerType]: {
         ...workerDetails[currentWorkerType],
-        hourlyWage: newValue,
+        hourlyRate: newValue,
       },
     });
   };
@@ -189,13 +189,13 @@ function Projects(props) {
                 </button>
 
                 <label>
-                  {payRateMode.charAt(0).toUpperCase() + payRateMode.slice(1)} Wage:
+                  {payRateMode.charAt(0).toUpperCase() + payRateMode.slice(1)} Rate:
                   <input
                       type="number"
                       value={
                         payRateMode === 'hourly'
-                            ? currentDetails.hourlyWage
-                            : (currentDetails.hourlyWage || 0) * 8
+                            ? currentDetails.hourlyRate
+                            : (currentDetails.hourlyRate || 0) * 8
                       }
                       onChange={handlePayRateChange}
                   />
@@ -225,14 +225,14 @@ function Projects(props) {
                   <br />
                   <ul>
                     {projects.map((project, index) => {
-                      const totalHourlyCost = project.numWorkers * project.hourlyWage;
-                      const totalDailyCost = project.numWorkers * project.hourlyWage * 8;
+                      const totalHourlyCost = project.numWorkers * project.hourlyRate;
+                      const totalDailyCost = project.numWorkers * project.hourlyRate * 8;
 
                       return (
                           <li key={index}>
                             {project.numWorkers} x {project.type.charAt(0).toUpperCase() + project.type.slice(1)} Employees
                             <br />
-                            {project.numHours}h/week | @ ${project.hourlyWage}/h | ${project.hourlyWage * 8}/day
+                            {project.numHours}h/week | @ ${project.hourlyRate}/h | ${project.hourlyRate * 8}/day
                             <br />
                             Total (hourly): ${totalHourlyCost}
                             <br />

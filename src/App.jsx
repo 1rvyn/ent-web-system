@@ -4,12 +4,15 @@ import AppRouter from './AppRouter';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
+  
   useEffect(() => {
     // Check if the "session" cookie is present
     const cookieExists = document.cookie.includes('session=');
+    console.log("checked cookie exists", cookieExists)
 
     setIsLoggedIn(cookieExists);
+
+    
   }, []);
 
   const [activeRoute, setActiveRoute] = useState(window.location.pathname);

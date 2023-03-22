@@ -6,10 +6,12 @@ import Login from './Login';
 import Register from './Register';
 import Projects from './Projects';
 import Test from './Test';
+import AdminHome from './Admin/Home';
+import AdminWrapper from './Admin/AdminWrapper';
 
 
 
-function AppRouter ({ isLoggedIn }) {
+function AppRouter ({ isLoggedIn}) {
   return (
     <BrowserRouter>
         <Routes>
@@ -22,6 +24,11 @@ function AppRouter ({ isLoggedIn }) {
             <Route path="/login" element={<Login />} />
 
             <Route path="/register" element={<Register />} />
+
+            <Route path="/admin/*" element={<AdminWrapper />}>
+              <Route path="" element={<AdminHome />} />
+              {/* Add other admin routes here */}
+            </Route>
 
         </Routes>
 
