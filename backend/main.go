@@ -60,8 +60,54 @@ func setupRoutes(app *fiber.App) {
 	app.Post("/register", Register)
 	app.Post("/projects", Project)
 	app.Post("/test", Test)
+	app.Get("/verify-user", VerifyUser)
 
 	app.Post("/session", getUserfromSession)
+}
+
+func VerifyUser(c *fiber.Ctx) error {
+	// get the token from the request
+
+	fmt.Println("verifying user... ")
+
+	sCookie := c.Cookies("session")
+
+	if sCookie == "" {
+		return c.JSON(fiber.Map{
+			"message": "unauthorized",
+		})
+	}
+
+	// Get the session from redis
+	session, err := database.Redis.GetHMap(sCookie)
+
+	// fmt.Println("the session from redis in verify user is \n", session)
+
+	// fmt.Println("the user role is \n", session["user_role"])
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"message": "unauthorized",
+		})
+	}
+	// fmt.Println("session: ", session)
+
+	if session == nil {
+		return c.JSON(fiber.Map{
+			"message": "unauthorized",
+		})
+	}
+
+	if session["user_role"] == "2" {
+		fmt.Println("authorized")
+		return c.JSON(fiber.Map{
+			"message": true,
+		})
+	} else {
+		return c.JSON(fiber.Map{
+			"message": "unauthorized",
+		})
+	}
+
 }
 
 func Test(c *fiber.Ctx) error {
@@ -279,6 +325,9 @@ func Login(c *fiber.Ctx) error {
 			session["user_id"] = user.ID
 			session["email"] = user.Email
 			session["token"] = SToken
+			session["expires_at"] = time.Now().Add(time.Hour * 24).Unix()
+			session["created_at"] = time.Now().Unix()
+			session["user_role"] = user.UserRole
 			// create a new token
 
 			err = database.Redis.PutHMap(token, session)
