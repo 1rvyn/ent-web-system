@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 function Projects(props) {
   const [isFetching, setIsFetching] = useState(false);
   const [projects, setProjects] = useState([]);
-  const [payRateMode, setPayRateMode] = useState('hourly');
   const [createdProjects, setCreatedProjects] = useState([]);
   const [currentWorkerType, setCurrentWorkerType] = useState('intern');
   const [nonHumanResources, setNonHumanResources] = useState([]);
@@ -12,13 +11,12 @@ function Projects(props) {
   const [nonHumanResourceMode, setNonHumanResourceMode] = useState('daily');
   const [workerDetails, setWorkerDetails] = useState({
     title: '',
-    intern: { numWorkers: 0, hourlyRate: 0, numHours: 0 },
-    junior: { numWorkers: 0, hourlyRate: 0, numHours: 0 },
-    mid: { numWorkers: 0, hourlyRate: 0, numHours: 0 },
-    senior: { numWorkers: 0, hourlyRate: 0, numHours: 0 },
+    intern: { numWorkers: 0, numHours: 0 },
+    junior: { numWorkers: 0, numHours: 0 },
+    mid: { numWorkers: 0, numHours: 0 },
+    senior: { numWorkers: 0, numHours: 0 },
   });
   const { isLoggedIn } = props;
-
 
   const handleAddNonHumanResource = () => {
     const newResource = {
@@ -44,22 +42,18 @@ function Projects(props) {
     setNonHumanResourceMode(nonHumanResourceMode === 'daily' ? 'monthly' : 'daily');
   };
 
+  const currentDetails = workerDetails[currentWorkerType];
+
   const handleAddWorker = () => {
     const updatedProjects = [...projects];
     const workerDetailsCopy = { ...workerDetails };
     const currentDetails = workerDetailsCopy[currentWorkerType];
 
-    const hourlyRate =
-        payRateMode === 'hourly'
-            ? Number(currentDetails.hourlyRate)
-            : Number(currentDetails.hourlyRate || 0);
-
+  
     const newWorker = {
       type: currentWorkerType,
       numWorkers: Number(currentDetails.numWorkers),
-      hourlyRate: hourlyRate,
       numHours: Number(currentDetails.numHours),
-      payRateMode,
     };
 
     updatedProjects.push(newWorker);
@@ -69,16 +63,9 @@ function Projects(props) {
     setCurrentWorkerType('intern');
     setWorkerDetails({
       ...workerDetailsCopy,
-      [currentWorkerType]: { numWorkers: 0, hourlyRate: 0, numHours: 0 },
+      [currentWorkerType]: { numWorkers: 0, numHours: 0 },
     });
   };
-
-
-
-  const handlePayRateToggle = () => {
-    setPayRateMode(payRateMode === 'hourly' ? 'daily' : 'hourly');
-  };
-
 
   const handleCreateProject = async (event) => {
     event.preventDefault();
@@ -87,11 +74,10 @@ function Projects(props) {
     const projectToCreate = {
       title: workerDetails.title,
       workers: projects,
-      nonHumanResources: nonHumanResources, // Add this line to include non-human resources
+      nonHumanResources: nonHumanResources,
     }
 
     console.log("New project:", JSON.stringify(projectToCreate));
-
 
     try {
       const response = await fetch('http://localhost:8085/projects', {
@@ -143,25 +129,6 @@ function Projects(props) {
     });
   };
 
-  const handlePayRateChange = (event) => {
-    const { value } = event.target;
-    let newValue;
-
-    if (payRateMode === 'hourly') {
-      newValue = value;
-    } else {
-      newValue = value / 8;
-    }
-
-    setWorkerDetails({
-      ...workerDetails,
-      [currentWorkerType]: {
-        ...workerDetails[currentWorkerType],
-        hourlyRate: newValue,
-      },
-    });
-  };
-
   const handleNumHoursChange = (event) => {
     const { value } = event.target;
     setWorkerDetails({
@@ -189,9 +156,6 @@ function Projects(props) {
     );
   };
 
-
-  const currentDetails = workerDetails[currentWorkerType];
-
   return (
       <div>
         {isLoggedIn ? (
@@ -213,24 +177,7 @@ function Projects(props) {
                       onChange={handleNumWorkersChange}
                   />
                 </label>
-                <br />
-                <button onClick={handlePayRateToggle}>
-                  {payRateMode === 'hourly' ? 'Switch to Daily' : 'Switch to Hourly'}
-                </button>
 
-                <label>
-                  {payRateMode.charAt(0).toUpperCase() + payRateMode.slice(1)} Rate:
-                  <input
-                      type="number"
-                      value={
-                        payRateMode === 'hourly'
-                            ? currentDetails.hourlyRate
-                            : (currentDetails.hourlyRate || 0) * 8
-                      }
-                      onChange={handlePayRateChange}
-                  />
-
-                </label>
                 <br />
 
                 <label>
@@ -281,18 +228,12 @@ function Projects(props) {
                   <br />
                   <ul>
                     {projects.map((project, index) => {
-                      const totalHourlyCost = project.numWorkers * project.hourlyRate;
-                      const totalDailyCost = project.numWorkers * project.hourlyRate * 8;
-
+                    
                       return (
                           <li key={index}>
                             {project.numWorkers} x {project.type.charAt(0).toUpperCase() + project.type.slice(1)} Employees
                             <br />
-                            {project.numHours}h/week | @ ${project.hourlyRate}/h | ${project.hourlyRate * 8}/day
-                            <br />
-                            Total (hourly): ${totalHourlyCost}
-                            <br />
-                            Total (daily): ${totalDailyCost}
+                            {project.numHours} h/week |                           
                           </li>
                       );
                     })}
