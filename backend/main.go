@@ -59,10 +59,48 @@ func setupRoutes(app *fiber.App) {
 	app.Post("/login", Login)
 	app.Post("/register", Register)
 	app.Post("/projects", Project)
+	app.Get("/proj", GetProjects)
 	app.Post("/test", Test)
 	app.Get("/verify-user", VerifyUser)
 
 	app.Post("/session", getUserfromSession)
+}
+
+func GetProjects(c *fiber.Ctx) error {
+	fmt.Println("GetProjects endpoint hit")
+
+	// Retrieve user ID
+	sessionCookie := c.Cookies("session")
+
+	if sessionCookie == "" {
+		return c.JSON(fiber.Map{
+			"message": "user not found",
+		})
+	}
+
+	// search for the session in redis
+	session, err := database.Redis.GetHMap(sessionCookie)
+	if err != nil {
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": "failed to get session",
+		})
+	}
+
+	userID := session["user_id"]
+	fmt.Println("getting projects for the user with the ID of: ", userID)
+
+	// Get the projects from the database
+
+	var projects []models.Project
+	if err := database.Database.Db.Where("owner_id = ?", userID).Find(&projects).Error; err != nil {
+		return err
+	}
+
+	return c.JSON(fiber.Map{
+		"message":  "success",
+		"projects": projects,
+	})
 }
 
 func VerifyUser(c *fiber.Ctx) error {
@@ -136,6 +174,8 @@ func Project(c *fiber.Ctx) error {
 	if err := c.BodyParser(&project); err != nil {
 		return err
 	}
+
+	fmt.Println("project: ", project)
 
 	// Retrieve user ID
 	sessionCookie := c.Cookies("session")

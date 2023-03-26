@@ -3,20 +3,28 @@ package models
 import "encoding/json"
 
 type Project struct {
-	ID          uint            `json:"id" gorm:"primaryKey"`
-	Title       string          `json:"title"`
-	Description string          `json:"description"`
-	Workers     []ProjectWorker `json:"workers" gorm:"foreignKey:ProjectID"`
-	OwnerID     *uint           `json:"owner_id"` // we use a pointer to allow for null values
+	ID                uint               `json:"id" gorm:"primaryKey"`
+	Title             string             `json:"title"`
+	Description       string             `json:"description"`
+	Workers           []ProjectWorker    `json:"workers" gorm:"foreignKey:ProjectID"`
+	NonHumanResources []NonHumanResource `json:"nonHumanResources" gorm:"foreignKey:ProjectID"`
+	OwnerID           *uint              `json:"owner_id"` // we use a pointer to allow for null values
 }
 
 type ProjectWorker struct {
 	ID         uint    `json:"id" gorm:"primaryKey"`
 	Type       string  `json:"type"`
 	NumWorkers int     `json:"numWorkers" gorm:"column:num_workers"`
-	HourlyRate float64 `json:"hourlyRate" gorm:"column:hourly_rate"`
-	NumHours   int     `json:"numHours" gorm:"column:num_hours"`
+	NumHours   float64 `json:"numHours" gorm:"column:num_hours"`
 	ProjectID  uint    `json:"projectId" gorm:"column:project_id"`
+}
+
+type NonHumanResource struct {
+	ID        uint   `json:"id" gorm:"primaryKey"`
+	Name      string `json:"name"`
+	Cost      int    `json:"cost"`
+	Mode      string `json:"mode"`
+	ProjectID uint   `json:"projectId" gorm:"column:project_id"`
 }
 
 // handle parsing json properly
@@ -24,7 +32,8 @@ type ProjectWorker struct {
 func (p *Project) UnmarshalJSON(data []byte) error {
 	type Alias Project
 	aux := &struct {
-		Workers []json.RawMessage `json:"workers"`
+		Workers           []json.RawMessage `json:"workers"`
+		NonHumanResources []json.RawMessage `json:"nonHumanResources"`
 		*Alias
 	}{
 		Alias: (*Alias)(p),
@@ -38,6 +47,13 @@ func (p *Project) UnmarshalJSON(data []byte) error {
 			return err
 		}
 		p.Workers = append(p.Workers, worker)
+	}
+	for _, raw := range aux.NonHumanResources {
+		var resource NonHumanResource
+		if err := json.Unmarshal(raw, &resource); err != nil {
+			return err
+		}
+		p.NonHumanResources = append(p.NonHumanResources, resource)
 	}
 	return nil
 }
