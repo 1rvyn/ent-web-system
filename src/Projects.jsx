@@ -6,6 +6,10 @@ function Projects(props) {
   const [payRateMode, setPayRateMode] = useState('hourly');
   const [createdProjects, setCreatedProjects] = useState([]);
   const [currentWorkerType, setCurrentWorkerType] = useState('intern');
+  const [nonHumanResources, setNonHumanResources] = useState([]);
+  const [nonHumanResourceName, setNonHumanResourceName] = useState('');
+  const [nonHumanResourceCost, setNonHumanResourceCost] = useState(0);
+  const [nonHumanResourceMode, setNonHumanResourceMode] = useState('daily');
   const [workerDetails, setWorkerDetails] = useState({
     title: '',
     intern: { numWorkers: 0, hourlyRate: 0, numHours: 0 },
@@ -14,6 +18,31 @@ function Projects(props) {
     senior: { numWorkers: 0, hourlyRate: 0, numHours: 0 },
   });
   const { isLoggedIn } = props;
+
+
+  const handleAddNonHumanResource = () => {
+    const newResource = {
+      name: nonHumanResourceName,
+      cost: nonHumanResourceCost,
+      mode: nonHumanResourceMode,
+    };
+
+    setNonHumanResources([...nonHumanResources, newResource]);
+    setNonHumanResourceName('');
+    setNonHumanResourceCost(0);
+  };
+
+  const handleNonHumanResourceNameChange = (event) => {
+    setNonHumanResourceName(event.target.value);
+  };
+
+  const handleNonHumanResourceCostChange = (event) => {
+    setNonHumanResourceCost(Number(event.target.value));
+  };
+
+  const handleNonHumanResourceModeToggle = () => {
+    setNonHumanResourceMode(nonHumanResourceMode === 'daily' ? 'monthly' : 'daily');
+  };
 
   const handleAddWorker = () => {
     const updatedProjects = [...projects];
@@ -57,7 +86,8 @@ function Projects(props) {
 
     const projectToCreate = {
       title: workerDetails.title,
-      workers: projects
+      workers: projects,
+      nonHumanResources: nonHumanResources, // Add this line to include non-human resources
     }
 
     console.log("New project:", JSON.stringify(projectToCreate));
@@ -166,7 +196,7 @@ function Projects(props) {
       <div>
         {isLoggedIn ? (
             <>
-              <p>You are logged in. Welcome back!</p>
+              <p>You are logged in. Create a new project!</p>
 
               <div className="worker-buttons">
                 {['intern', 'junior', 'mid', 'senior'].map(renderWorkerButton)}
@@ -215,6 +245,32 @@ function Projects(props) {
 
                 <button onClick={handleAddWorker}>Add {currentWorkerType} Workers</button>
               </div>
+
+              <div className="non-human-resources-form">
+            <h3>Non-human Resources</h3>
+            <label>
+              Name:
+              <input
+                type="text"
+                value={nonHumanResourceName}
+                onChange={handleNonHumanResourceNameChange}
+              />
+            </label>
+            <br />
+            <button onClick={handleNonHumanResourceModeToggle}>
+              {nonHumanResourceMode === 'daily' ? 'Switch to Monthly' : 'Switch to Daily'}
+            </button>
+            <label>
+              {nonHumanResourceMode.charAt(0).toUpperCase() + nonHumanResourceMode.slice(1)} Cost:
+              <input
+                type="number"
+                value={nonHumanResourceCost}
+                onChange={handleNonHumanResourceCostChange}
+              />
+            </label>
+            <br />
+            <button onClick={handleAddNonHumanResource}>Add Non-human Resource</button>
+          </div>
               <div className="project-form">
                 <h3>Current project:</h3>
                 <form onSubmit={handleCreateProject}>
@@ -240,6 +296,18 @@ function Projects(props) {
                           </li>
                       );
                     })}
+                  </ul>
+
+                  <ul>
+                  {nonHumanResources.map((resource, index) => {
+                return (
+                  <li key={index}>
+                    {resource.name}
+                    <br />
+                    {resource.mode}: ${resource.cost}
+                  </li>
+                );
+              })}
                   </ul>
                   <button type="submit" disabled={isFetching}>
                     {isFetching ? 'Creating...' : 'Create a Project'}
