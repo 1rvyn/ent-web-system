@@ -1,6 +1,9 @@
 package models
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"gorm.io/gorm"
+)
 
 type Project struct {
 	ID                uint               `json:"id" gorm:"primaryKey"`
@@ -16,6 +19,7 @@ type ProjectWorker struct {
 	Type       string  `json:"type"`
 	NumWorkers int     `json:"numWorkers" gorm:"column:num_workers"`
 	NumHours   float64 `json:"numHours" gorm:"column:num_hours"`
+	Rate       float64 `json:"rate" gorm:"column:rate"`
 	ProjectID  uint    `json:"projectId" gorm:"column:project_id"`
 }
 
@@ -25,6 +29,26 @@ type NonHumanResource struct {
 	Cost      int    `json:"cost"`
 	Mode      string `json:"mode"`
 	ProjectID uint   `json:"projectId" gorm:"column:project_id"`
+}
+
+func (pw *ProjectWorker) BeforeCreate(tx *gorm.DB) (err error) {
+	pw.setBaseRate()
+	return
+}
+
+func (pw *ProjectWorker) setBaseRate() {
+	switch pw.Type {
+	case "intern":
+		pw.Rate = 15
+	case "junior":
+		pw.Rate = 25
+	case "mid":
+		pw.Rate = 60
+	case "senior":
+		pw.Rate = 120
+	default:
+		pw.Rate = 10
+	}
 }
 
 // handle parsing json properly
