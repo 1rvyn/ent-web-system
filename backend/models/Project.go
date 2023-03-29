@@ -3,8 +3,6 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-
-	"gorm.io/gorm"
 )
 
 type Project struct {
@@ -35,10 +33,10 @@ type NonHumanResource struct {
 	ProjectID uint   `json:"projectId" gorm:"column:project_id"`
 }
 
-func (pw *ProjectWorker) BeforeCreate(tx *gorm.DB) (err error) {
-	pw.setBaseRate()
-	return
-}
+//func (pw *ProjectWorker) BeforeCreate(tx *gorm.DB) (err error) {
+//	pw.setBaseRate()
+//	return
+//}
 
 func (pw *ProjectWorker) setBaseRate() {
 	switch pw.Type {
@@ -74,6 +72,7 @@ func (p *Project) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(raw, &worker); err != nil {
 			return err
 		}
+		worker.setBaseRate() // Set the worker rate here
 		p.Workers = append(p.Workers, worker)
 	}
 	for _, raw := range aux.NonHumanResources {
@@ -87,12 +86,13 @@ func (p *Project) UnmarshalJSON(data []byte) error {
 }
 
 func CalculateOverheadAndQuote(project *Project) {
-	fmt.Println("Calculating overhead and quote")
+	fmt.Println("Calculating overhead and quote for the project: " + project.Title)
 	overhead := 0.0
 	quote := 0.0
 
 	for _, worker := range project.Workers {
 		workerCost := float64(worker.NumWorkers) * worker.NumHours * worker.Rate
+		fmt.Println("the worker rate is: " + fmt.Sprintf("%f", worker.Rate))
 		overhead += workerCost
 		fudgeFactor := 1.0
 
