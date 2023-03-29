@@ -61,6 +61,15 @@ function App() {
                     Test
                   </a>
                 </li>
+                <li>
+                    <a
+                        className={activeRoute === '/get-projects' ? 'active' : ''}
+                        href="/get-projects"
+                        onClick={() => setActiveRoute('/get-projects')}
+                    >
+                        Get Projects
+                    </a>
+                </li>
               </>
             ) : (
               <>

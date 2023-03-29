@@ -6,8 +6,10 @@ import Login from './Login';
 import Register from './Register';
 import Projects from './Projects';
 import Test from './Test';
+import Getprojs from './Getprojs';
 import AdminHome from './Admin/Home';
 import AdminWrapper from './Admin/AdminWrapper';
+
 
 
 
@@ -20,6 +22,8 @@ function AppRouter ({ isLoggedIn}) {
             <Route path="/projects" element={<Projects isLoggedIn={isLoggedIn} />} />
 
             <Route path="/test" element={<Test isLoggedIn={isLoggedIn} />} />
+
+            <Route path="/get-projects" element={<Getprojs isLoggedIn={isLoggedIn} />} />
 
             <Route path="/login" element={<Login />} />
 
