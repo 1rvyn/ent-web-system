@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 function Projects(props) {
   const [isFetching, setIsFetching] = useState(false);
   const [projects, setProjects] = useState([]);
-  const [createdProjects, setCreatedProjects] = useState([]);
+  // const [createdProjects, setCreatedProjects] = useState([]);
+  const [createdQuotes, setCreatedQuotes] = useState([]);
   const [currentWorkerType, setCurrentWorkerType] = useState('intern');
   const [nonHumanResources, setNonHumanResources] = useState([]);
   const [nonHumanResourceName, setNonHumanResourceName] = useState('');
@@ -95,10 +96,14 @@ function Projects(props) {
         throw new Error('Failed to create project');
       }
 
-      const newProject = await response.json();
+      const responseData = await response.json();
+      const quote = parseFloat(responseData.quote).toFixed(2); // Round the quote to 2 decimal places
       // Update createdProjects state
-      setCreatedProjects([...createdProjects, newProject]);
-      console.log(newProject)
+      // setCreatedProjects([...createdProjects, newProject]);
+
+      // Update createdQuotes state
+      setCreatedQuotes([...createdQuotes, quote]);
+      // console.log(newProject)
     } catch (error) {
       console.error(error);
     } finally {
@@ -254,6 +259,15 @@ function Projects(props) {
                     {isFetching ? 'Creating...' : 'Create a Project'}
                   </button>
                 </form>
+              </div>
+
+              <div className="created-quotes">
+                <h3>Created Quote:</h3>
+                <ul>
+                  {createdQuotes.map((quote, index) => (
+                      <li key={index}>{quote}</li>
+                  ))}
+                </ul>
               </div>
 
             </>
