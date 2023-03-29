@@ -66,7 +66,52 @@ func setupRoutes(app *fiber.App) {
 	app.Post("/session", getUserfromSession)
 	app.Post("/fudge", Fudge)
 
+	app.Get("/get-projects", RetrieveProjects)
+
 	//app.Post("/update-project", UpdateProject)
+}
+
+func RetrieveProjects(c *fiber.Ctx) error {
+	fmt.Println("RetrieveProjects endpoint hit")
+
+	// Retrieve user ID
+	sessionCookie := c.Cookies("session")
+
+	if sessionCookie == "" {
+		return c.JSON(fiber.Map{
+			"message": "user not found",
+		})
+	}
+
+	// search for the session in redis
+	session, err := database.Redis.GetHMap(sessionCookie)
+	if err != nil {
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": "failed to get session",
+		})
+	}
+
+	userID := session["user_id"]
+
+	// convert the user id to a uint from string
+	userIDUint, err := strconv.ParseUint(userID, 10, 32)
+	if err != nil {
+		fmt.Println("error converting user id to uint")
+	}
+
+	fmt.Println("getting projects for the user with the ID of: ", userIDUint)
+
+	// Get the projects from the database
+	var projects []models.Project
+	database.Database.Db.Preload("Workers").Preload("NonHumanResources").Where("owner_id = ?", userIDUint).Find(&projects)
+
+	fmt.Println("projects: ", projects)
+
+	return c.JSON(fiber.Map{
+		"message":  "success",
+		"projects": projects,
+	})
 }
 
 //func UpdateProject(c *fiber.Ctx) error {
