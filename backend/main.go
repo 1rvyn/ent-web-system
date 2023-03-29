@@ -265,6 +265,9 @@ func Project(c *fiber.Ctx) error {
 		return err
 	}
 
+	// calulate the total cost of the project (fudge + real)
+	models.CalculateOverheadAndQuote(&project)
+
 	fmt.Println("project: ", project)
 
 	// Retrieve user ID

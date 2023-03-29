@@ -2,6 +2,8 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
+
 	"gorm.io/gorm"
 )
 
@@ -11,6 +13,8 @@ type Project struct {
 	Description       string             `json:"description"`
 	Workers           []ProjectWorker    `json:"workers" gorm:"foreignKey:ProjectID"`
 	NonHumanResources []NonHumanResource `json:"nonHumanResources" gorm:"foreignKey:ProjectID"`
+	Overhead          float64            `json:"overhead"` // real cost
+	Quote             float64            `json:"quote"`    // fudge factor adjusted cost
 	OwnerID           *uint              `json:"owner_id"` // we use a pointer to allow for null values
 }
 
@@ -80,4 +84,37 @@ func (p *Project) UnmarshalJSON(data []byte) error {
 		p.NonHumanResources = append(p.NonHumanResources, resource)
 	}
 	return nil
+}
+
+func CalculateOverheadAndQuote(project *Project) {
+	fmt.Println("Calculating overhead and quote")
+	overhead := 0.0
+	quote := 0.0
+
+	for _, worker := range project.Workers {
+		workerCost := float64(worker.NumWorkers) * worker.NumHours * worker.Rate
+		overhead += workerCost
+		fudgeFactor := 1.0
+
+		switch worker.Type {
+		case "intern":
+			fudgeFactor = 1.15
+		case "junior":
+			fudgeFactor = 1.1
+		case "mid":
+			fudgeFactor = 1.07
+		case "senior":
+			fudgeFactor = 1.05
+		}
+
+		quote += workerCost * fudgeFactor
+	}
+
+	for _, resource := range project.NonHumanResources {
+		overhead += float64(resource.Cost)
+		quote += float64(resource.Cost)
+	}
+
+	project.Overhead = overhead
+	project.Quote = quote
 }
