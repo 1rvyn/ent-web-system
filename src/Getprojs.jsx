@@ -52,7 +52,6 @@ function Getprojs(props) {
                                     <p>Type: {worker.type}</p>
                                     <p>Number of Workers: {worker.numWorkers}</p>
                                     <p>Hours: {worker.numHours}</p>
-                                    <p>Rate: {worker.rate}</p>
                                 </div>
                             ))}
                         </div>
