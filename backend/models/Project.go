@@ -3,6 +3,8 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
+	"time"
 )
 
 type Project struct {
@@ -90,29 +92,41 @@ func CalculateOverheadAndQuote(project *Project) {
 	overhead := 0.0
 	quote := 0.0
 
+	// Seed the random number generator
+	rand.Seed(time.Now().UnixNano())
+
+	totalWorkers := 0
 	for _, worker := range project.Workers {
+		totalWorkers += worker.NumWorkers
 		workerCost := float64(worker.NumWorkers) * worker.NumHours * worker.Rate
 		fmt.Println("the worker rate is: " + fmt.Sprintf("%f", worker.Rate))
 		overhead += workerCost
-		fudgeFactor := 1.0
 
+		var minFudgeFactor, maxFudgeFactor float64
 		switch worker.Type {
 		case "intern":
-			fudgeFactor = 1.15
+			minFudgeFactor, maxFudgeFactor = 0.95, 1.35
 		case "junior":
-			fudgeFactor = 1.1
+			minFudgeFactor, maxFudgeFactor = 0.9, 1.3
 		case "mid":
-			fudgeFactor = 1.07
+			minFudgeFactor, maxFudgeFactor = 0.95, 1.25
 		case "senior":
-			fudgeFactor = 1.05
+			minFudgeFactor, maxFudgeFactor = 0.95, 1.2
 		}
 
+		fudgeFactor := minFudgeFactor + rand.Float64()*(maxFudgeFactor-minFudgeFactor)
 		quote += workerCost * fudgeFactor
 	}
 
 	for _, resource := range project.NonHumanResources {
 		overhead += float64(resource.Cost)
 		quote += float64(resource.Cost)
+	}
+
+	// this will prevent users from creating quotes with low worker counts and getting information on our worker rates
+	if totalWorkers < 10 {
+		randomBaseCost := rand.Float64() * 10000
+		quote += randomBaseCost
 	}
 
 	project.Overhead = overhead

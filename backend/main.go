@@ -106,11 +106,18 @@ func RetrieveProjects(c *fiber.Ctx) error {
 	var projects []models.Project
 	database.Database.Db.Preload("Workers").Preload("NonHumanResources").Where("owner_id = ?", userIDUint).Find(&projects)
 
-	fmt.Println("projects: ", projects)
+	// Create a slice to store the project responses
+	var projectResponses []utils.ProjectResponse
+
+	// Loop through the projects and convert each project to a ProjectResponse
+	for _, project := range projects {
+		projectResponse := utils.ProjectToResponse(&project)
+		projectResponses = append(projectResponses, projectResponse)
+	}
 
 	return c.JSON(fiber.Map{
 		"message":  "success",
-		"projects": projects,
+		"projects": projectResponses,
 	})
 }
 
@@ -187,9 +194,18 @@ func GetProjects(c *fiber.Ctx) error {
 		return err
 	}
 
+	// Create a slice to store the project responses
+	var projectResponses []utils.ProjectResponse
+
+	// Loop through the projects and convert each project to a ProjectResponse
+	for _, project := range projects {
+		projectResponse := utils.ProjectToResponse(&project)
+		projectResponses = append(projectResponses, projectResponse)
+	}
+
 	return c.JSON(fiber.Map{
 		"message":  "success",
-		"projects": projects,
+		"projects": projectResponses,
 	})
 }
 
