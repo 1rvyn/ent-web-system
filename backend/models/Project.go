@@ -113,14 +113,20 @@ func CalculateOverheadAndQuote(project *Project) {
 		case "senior":
 			minFudgeFactor, maxFudgeFactor = 0.95, 1.2
 		}
-
+		// keep it within 10% either way of the actual cost per worker
 		fudgeFactor := minFudgeFactor + rand.Float64()*(maxFudgeFactor-minFudgeFactor)
 		quote += workerCost * fudgeFactor
 	}
 
 	for _, resource := range project.NonHumanResources {
-		overhead += float64(resource.Cost)
-		quote += float64(resource.Cost)
+		if resource.Mode == "daily" {
+			overhead += float64(resource.Cost) * 30
+			quote += float64(resource.Cost) * 30
+		} else {
+			overhead += float64(resource.Cost)
+			quote += float64(resource.Cost)
+		}
+		fmt.Println("the resource mode is: " + resource.Mode)
 	}
 
 	// this will prevent users from creating quotes with low worker counts and getting information on our worker rates
