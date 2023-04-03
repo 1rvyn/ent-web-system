@@ -62,12 +62,64 @@ func setupRoutes(app *fiber.App) {
 	app.Get("/proj", GetProjects)
 	app.Post("/test", Test)
 	app.Get("/verify-user", VerifyUser)
+	app.Delete("/delete-project/:id", DeleteProject)
 
 	app.Post("/session", getUserfromSession)
 
 	app.Get("/get-projects", RetrieveProjects)
 
 	//app.Post("/update-project", UpdateProject)
+}
+
+func DeleteProject(c *fiber.Ctx) error {
+	// get the users session
+	sessionCookie := c.Cookies("session")
+
+	if sessionCookie == "" {
+		return c.SendStatus(401)
+	}
+
+	// search for the session in redis
+
+	session, err := database.Redis.GetHMap(sessionCookie)
+	if err != nil {
+		fmt.Println("error getting session from redis")
+	}
+
+	// get the user id from the session
+	userID := session["user_id"]
+
+	// convert the user id to a uint from string
+	userIDUint, err := strconv.ParseUint(userID, 10, 32)
+	if err != nil {
+		fmt.Println("error converting user id to uint")
+	}
+
+	// get the project id from the url
+	projectID := c.Params("id")
+
+	// check to make sure he owns the project
+	var project models.Project
+	database.Database.Db.First(&project, projectID)
+
+	if project.UserID != uint(userIDUint) {
+		return c.SendStatus(401)
+	}
+
+	// convert the project id to an uint
+	projectIDUint, err := strconv.ParseUint(projectID, 10, 32)
+	if err != nil {
+		fmt.Println("error converting project id to uint")
+	}
+
+	// TODO: check if the user is the owner of the project
+
+	// delete the project from the database
+	database.Database.Db.Delete(&models.Project{}, projectIDUint)
+
+	return c.JSON(fiber.Map{
+		"message": "project deleted",
+	})
 }
 
 func RetrieveProjects(c *fiber.Ctx) error {
@@ -77,9 +129,7 @@ func RetrieveProjects(c *fiber.Ctx) error {
 	sessionCookie := c.Cookies("session")
 
 	if sessionCookie == "" {
-		return c.JSON(fiber.Map{
-			"message": "user not found",
-		})
+		return c.SendStatus(401)
 	}
 
 	// search for the session in redis
