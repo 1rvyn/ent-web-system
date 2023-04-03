@@ -57,24 +57,30 @@ function Getprojs(props) {
       };
       
     
-    function sendDelete(id){
-        console.log("delete" + id)
-    }
+      async function sendDelete(id) {
+        console.log('Deleting project with ID:', id)
+        try {
+          const response = await fetch(`http://localhost:8085/delete-project/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            mode: 'cors',
+            credentials: 'include',
+          });
+      
+          if (!response.ok) {
+            throw new Error('Failed to delete project');
+          }
+      
+          const data = await response.json();
+          console.log('Project deletion response:', data);
 
-    // function sendDelete(id) {
-    //     try {
-    //         const response = await fetch('http://localhost:8085/delete-project/'+id, {
-    //             method: 'DELETE',
-    //             headers: {
-    //                 'Content-Type': 'application/json'
-    //             },
-    //             body: JSON.stringify({ id }),
-    //             mode: 'cors',
-    //             credentials: 'include',
-    //         });
-    //         return response;
-    //     }
-    // }
+        } catch (error) {
+            console.error(`Failed to delete project with ID ${id}:`, error);
+        }
+    }
+      
 
     const deleteProject = async (projectId) => {
         try {
@@ -87,6 +93,7 @@ function Getprojs(props) {
             );
         } catch (error) {
             console.error(`Failed to delete project with ID ${projectId}:`, error);
+            throw error;
         }
     };
     
