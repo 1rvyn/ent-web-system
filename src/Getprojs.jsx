@@ -35,6 +35,62 @@ function Getprojs(props) {
         }
     };
 
+    const ConfirmDelete = ({ projectId, onDelete }) => {
+        const [isConfirming, setIsConfirming] = useState(false);
+      
+        const handleDeleteClick = () => {
+          if (isConfirming) {
+            onDelete(projectId);
+          }
+          setIsConfirming(!isConfirming);
+        };
+      
+        return (
+          <button className="delete-button" onClick={handleDeleteClick}>
+            {isConfirming ? (
+              <i className="fas fa-check-circle"></i>
+            ) : (
+              <i className="fas fa-trash-alt"></i>
+            )}
+          </button>
+        );
+      };
+      
+    
+    function sendDelete(id){
+        console.log("delete" + id)
+    }
+
+    // function sendDelete(id) {
+    //     try {
+    //         const response = await fetch('http://localhost:8085/delete-project/'+id, {
+    //             method: 'DELETE',
+    //             headers: {
+    //                 'Content-Type': 'application/json'
+    //             },
+    //             body: JSON.stringify({ id }),
+    //             mode: 'cors',
+    //             credentials: 'include',
+    //         });
+    //         return response;
+    //     }
+    // }
+
+    const deleteProject = async (projectId) => {
+        try {
+            // Replace with your backend API call to delete a project by ID
+            await sendDelete(projectId);
+    
+            // Update the projects array by filtering out the deleted project
+            setProjects((prevProjects) =>
+                prevProjects.filter((project) => project.id !== projectId)
+            );
+        } catch (error) {
+            console.error(`Failed to delete project with ID ${projectId}:`, error);
+        }
+    };
+    
+
     return (
         <div className="getprojs">
             <button onClick={fetchProjects} disabled={isSubmitting}>
@@ -44,7 +100,8 @@ function Getprojs(props) {
                 {projects.map((project, index) => (
                     <div key={index} className="project-card">
                         <h3>{project.title || 'Untitled Project'}</h3>
-                        <p>{project.description || 'No description provided.'}</p>
+                        <p>ID: {project.id || 'No project ID provided.'}</p>
+                        <ConfirmDelete projectId={project.id} onDelete={deleteProject} />
                         <div className="workers-container">
                             <h4>Workers</h4>
                             {project.workers.map((worker, idx) => (
