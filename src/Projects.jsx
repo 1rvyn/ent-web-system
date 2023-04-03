@@ -165,6 +165,7 @@ function Projects(props) {
       <div>
         {isLoggedIn ? (
             <>
+              <br/>
               <p>You are logged in. Create a new project!</p>
 
               <div className="worker-buttons">

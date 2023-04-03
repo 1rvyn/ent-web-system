@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import './assets/getproj.css';
 
 
@@ -6,6 +6,51 @@ function Getprojs(props) {
     const [projects, setProjects] = useState([]);
     const { isLoggedIn } = props;
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [hasLoadedProjects, setHasLoadedProjects] = useState(false);
+
+
+
+    const [mergeMode, setMergeMode] = useState(false);
+    const [selectedProjects, setSelectedProjects] = useState(new Set());
+
+
+    // // Fetch projects on component mount -- we might use this to refresh to show the new combined quote/project
+    // useEffect(() => {
+    //     fetchProjects();
+    // }, []);
+
+    // toggle merge mode
+    const toggleMergeMode = () => {
+        setMergeMode(!mergeMode);
+        setSelectedProjects(new Set());
+    };
+
+    // handle selecting cards
+
+    const handleProjectCardClick = (projectId) => {
+        if (!mergeMode) return;
+
+        const newSelectedProjects = new Set(selectedProjects);
+        if (newSelectedProjects.has(projectId)) {
+            newSelectedProjects.delete(projectId);
+        } else {
+            newSelectedProjects.add(projectId);
+        }
+        setSelectedProjects(newSelectedProjects);
+    };
+
+
+    // combine projects
+    const mergeSelectedProjects = async () => {
+        console.log('Merging projects:', selectedProjects); // debug
+        setMergeMode(false); // these two lines un select the projects after merging
+        setSelectedProjects(new Set());
+
+
+        // Call your backend API to merge projects
+        // After merging, refresh the project list by calling fetchProjects()
+    };
+
 
     const fetchProjects = async () => {
         setIsSubmitting(true);
@@ -27,6 +72,8 @@ function Getprojs(props) {
             const data = await response.json();
             console.log(data.projects)
             setProjects(data.projects);
+            setHasLoadedProjects(true); // Set to true after successfully loading projects
+
 
         } catch (error) {
             alert(error.message);
@@ -96,26 +143,42 @@ function Getprojs(props) {
             throw error;
         }
     };
-    
 
     return (
         <div className="getprojs">
             <button onClick={fetchProjects} disabled={isSubmitting}>
                 {isSubmitting ? 'Loading...' : 'Load Projects'}
             </button>
+            {hasLoadedProjects && ( // Only show the merge button if there are projects to merge
+                <button onClick={toggleMergeMode}>
+                    {mergeMode ? 'Cancel Merge' : 'Merge Projects'}
+                </button>
+            )}
+            {mergeMode && (
+                <button onClick={mergeSelectedProjects} disabled={selectedProjects.size < 2}>
+                    Submit Merge
+                </button>
+            )}
             <div className="projects-container">
                 {projects.map((project, index) => (
-                    <div key={index} className="project-card">
+                    <div
+                        key={index}
+                        className={`project-card ${mergeMode ? 'merge-mode' : ''} ${
+                            selectedProjects.has(project.id) ? 'selected' : ''}`}
+                        onClick={() => handleProjectCardClick(project.id)}
+                    >
+
                         <h3>{project.title || 'Untitled Project'}</h3>
                         <p>ID: {project.id || 'No project ID provided.'}</p>
                         <ConfirmDelete projectId={project.id} onDelete={deleteProject} />
+                        <p>Quote: £{project.quote.toFixed(2) !== null ? project.quote.toFixed(2) : 'No quote available.'}</p>
                         <div className="workers-container">
                             <h4>Workers</h4>
                             {project.workers.map((worker, idx) => (
                                 <div key={idx} className="worker-info">
                                     <p>Type: {worker.type}</p>
-                                    <p>Number of Workers: {worker.numWorkers}</p>
-                                    <p>Hours: {worker.numHours}</p>
+                                    <p>Number of workers: {worker.numWorkers}</p>
+                                    <p>Weekly Hours: {worker.numHours}</p>
                                 </div>
                             ))}
                         </div>
