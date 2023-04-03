@@ -80,7 +80,6 @@ func DeleteProject(c *fiber.Ctx) error {
 	}
 
 	// search for the session in redis
-
 	session, err := database.Redis.GetHMap(sessionCookie)
 	if err != nil {
 		fmt.Println("error getting session from redis")
@@ -98,24 +97,54 @@ func DeleteProject(c *fiber.Ctx) error {
 	// get the project id from the url
 	projectID := c.Params("id")
 
-	// check to make sure he owns the project
+	// check to make sure the user owns the project
 	var project models.Project
 	database.Database.Db.First(&project, projectID)
 
-	if project.UserID != uint(userIDUint) {
-		return c.SendStatus(401)
-	}
+	fmt.Println("project id is: ", project.ID)
+	fmt.Println("user id from the URL param is: ", projectID)
+	fmt.Println("user id from the session is: ", userIDUint)
 
-	// convert the project id to an uint
+	// Check if the project
 	projectIDUint, err := strconv.ParseUint(projectID, 10, 32)
 	if err != nil {
 		fmt.Println("error converting project id to uint")
 	}
 
-	// TODO: check if the user is the owner of the project
+	// Ensure the user owns the project
+	if project.OwnerID == nil || uint(userIDUint) != *project.OwnerID {
+		return c.Status(401).JSON(fiber.Map{
+			"message": "you do not own this project",
+		})
+	}
 
-	// delete the project from the database
-	database.Database.Db.Delete(&models.Project{}, projectIDUint)
+	// delete the project from the database using a transaction
+	err = database.Database.Db.Transaction(func(tx *gorm.DB) error {
+		// delete project workers
+		if err := tx.Where("project_id = ?", projectIDUint).Delete(&models.ProjectWorker{}).Error; err != nil {
+			return err
+		}
+
+		// delete non-human resources
+		if err := tx.Where("project_id = ?", projectIDUint).Delete(&models.NonHumanResource{}).Error; err != nil {
+			return err
+		}
+
+		// delete the project
+		if err := tx.Delete(&project).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		// handle transaction error
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "failed to delete the project",
+			"error":   err.Error(),
+		})
+	}
 
 	return c.JSON(fiber.Map{
 		"message": "project deleted",
