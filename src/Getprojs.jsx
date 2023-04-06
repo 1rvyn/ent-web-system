@@ -43,12 +43,37 @@ function Getprojs(props) {
     // combine projects
     const mergeSelectedProjects = async () => {
         console.log('Merging projects:', selectedProjects); // debug
+        console.log("projects are ", Array.from(selectedProjects))
+
+        try {
+            const response = await fetch('http://localhost:8085/merge-projects', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                mode: 'cors',
+                credentials: 'include',
+                body: JSON.stringify({
+                    projectIds: Array.from(selectedProjects)
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to merge projects');
+            }
+
+            const data = await response.json();
+            console.log(data.projects)
+            setProjects(data.projects);
+            setHasLoadedProjects(true); // Set to true after successfully loading projects
+        } catch (error) {
+            alert(error.message);
+        }
+        finally {
         setMergeMode(false); // these two lines un select the projects after merging
         setSelectedProjects(new Set());
 
-
-        // Call your backend API to merge projects
-        // After merging, refresh the project list by calling fetchProjects()
+        }
     };
 
 
