@@ -6,6 +6,7 @@ function AdminWrapper() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log("admin wrapper useEffect")
     const checkAdminStatus = async () => {
       try {
         const response = await fetch('http://localhost:8085/verify-user', {
