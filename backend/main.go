@@ -74,6 +74,7 @@ func setupRoutes(app *fiber.App) {
 	//app.Post("/update-project", UpdateProject)
 }
 
+// TODO: Save the projects added properly
 func MergeProjects(c *fiber.Ctx) error {
 	sessionCookie := c.Cookies("session")
 
@@ -153,11 +154,10 @@ func MergeProjects(c *fiber.Ctx) error {
 	// save the merged quote to the database
 	database.Database.Db.Create(&mergedQuote)
 
-	// fmt.Println("total overhead is: ", totalOverhead)
-
-	// take total overhead and create a combined quote
-
-	return c.SendStatus(200)
+	// round the quote to 2 decimal places
+	return c.Status(200).JSON(fiber.Map{
+		"MergedQuote": quote,
+	})
 
 }
 
