@@ -63,8 +63,9 @@ function Getprojs(props) {
             }
 
             const data = await response.json();
-            console.log(data.projects)
-            setProjects(data.projects);
+            console.log(data.MergedQuote)
+            alert("Merged Quote: £" + data.MergedQuote.toFixed(2))
+            // setProjects(data.projects);
             setHasLoadedProjects(true); // Set to true after successfully loading projects
         } catch (error) {
             alert(error.message);
