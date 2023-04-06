@@ -71,7 +71,39 @@ func setupRoutes(app *fiber.App) {
 
 	app.Post("/merge-projects", MergeProjects)
 
+	app.Post("/logout", Logout)
+
 	//app.Post("/update-project", UpdateProject)
+}
+
+func Logout(c *fiber.Ctx) error {
+	fmt.Println("logging out")
+	// validate its a logged in user trying to logout
+	sessionCookie := c.Cookies("session")
+
+	if sessionCookie == "" {
+		fmt.Println("no session cookie")
+		return c.SendStatus(401)
+	}
+
+	// search for the session in redis
+	session, err := database.Redis.GetHMap(sessionCookie)
+	if err != nil {
+		fmt.Println("error getting session from redis")
+		return c.SendStatus(401)
+	}
+
+	fmt.Println("deleting the token", session["token"])
+	// since there is a session, delete it from redis
+	err = database.Redis.DeleteHMap(session["token"])
+	if err != nil {
+		fmt.Println("error deleting session from redis")
+		return c.SendStatus(401)
+	}
+
+	// delete the session cookie
+	c.ClearCookie("session")
+	return c.SendStatus(200)
 }
 
 // TODO: Save the projects added properly
