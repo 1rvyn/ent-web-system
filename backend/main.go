@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"enterpriseweb/database"
 	"enterpriseweb/models"
 	"enterpriseweb/routes"
@@ -68,7 +69,96 @@ func setupRoutes(app *fiber.App) {
 
 	app.Get("/get-projects", RetrieveProjects)
 
+	app.Post("/merge-projects", MergeProjects)
+
 	//app.Post("/update-project", UpdateProject)
+}
+
+func MergeProjects(c *fiber.Ctx) error {
+	sessionCookie := c.Cookies("session")
+
+	if sessionCookie == "" {
+		return c.SendStatus(401)
+	}
+
+	// search for the session in redis
+	session, err := database.Redis.GetHMap(sessionCookie)
+	if err != nil {
+		fmt.Println("error getting session from redis")
+	}
+
+	// get the user id from the session
+	userID := session["user_id"]
+
+	// convert the user id to a uint from string
+	userIDUint, err := strconv.ParseUint(userID, 10, 32)
+	if err != nil {
+		fmt.Println("error converting user id to uint")
+	}
+
+	fmt.Println("user id is: ", userIDUint)
+
+	// get the project ID's from the request body
+	// just sending an array of project ID's
+
+	type ProjectID struct {
+		ProjectIds []int `json:"projectIds"`
+	}
+
+	var request ProjectID
+	if err := json.Unmarshal(c.Body(), &request); err != nil {
+		return c.SendStatus(400)
+	}
+
+	// debug print the project ID's
+	fmt.Println("project ID's are: ", request.ProjectIds)
+
+	// for each project ID, get the project from the database
+	// and add the project ID's to an array
+	var projects []models.Project
+	// var projIds []int
+	for _, projectID := range request.ProjectIds {
+		var project models.Project
+		database.Database.Db.First(&project, projectID)
+		projects = append(projects, project)
+		// projIds = append(projIds, projectID)
+	}
+
+	// print all the quotes from the projects array
+
+	var totalOverhead float64 // total overhead for all the projects
+
+	for _, project := range projects {
+		totalOverhead += project.Overhead
+		fmt.Println("project overhead is: ", project.Overhead, "for project: ", project.Title)
+	}
+
+	// make the quote - fudge based on the number of projects
+
+	// total overhead multiplied by 0.89 - 1.11 (fudge factor)
+	quote := totalOverhead * utils.RandomFloat64(0.89, 1.11)
+	fmt.Println("random num", utils.RandomFloat64(0.89, 1.11))
+
+	fmt.Println("quote we made", quote)
+
+	var mergedQuote models.MergedQuotes
+
+	// create a new merged quote
+	mergedQuote.OwnerID = uint(userIDUint)
+	mergedQuote.Overhead = totalOverhead
+	mergedQuote.Quote = quote
+
+	fmt.Println(mergedQuote)
+
+	// save the merged quote to the database
+	database.Database.Db.Create(&mergedQuote)
+
+	// fmt.Println("total overhead is: ", totalOverhead)
+
+	// take total overhead and create a combined quote
+
+	return c.SendStatus(200)
+
 }
 
 func DeleteProject(c *fiber.Ctx) error {
@@ -105,7 +195,6 @@ func DeleteProject(c *fiber.Ctx) error {
 	fmt.Println("user id from the URL param is: ", projectID)
 	fmt.Println("user id from the session is: ", userIDUint)
 
-	// Check if the project
 	projectIDUint, err := strconv.ParseUint(projectID, 10, 32)
 	if err != nil {
 		fmt.Println("error converting project id to uint")

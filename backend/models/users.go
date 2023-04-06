@@ -9,5 +9,4 @@ type Users struct {
 	UserRole  int       `gorm:"default:1"`
 	CreatedAt time.Time `json:"created_at"`
 	Projects  []Project `gorm:"foreignKey:OwnerID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"` // Add a relationship to the Projects
-
 }
