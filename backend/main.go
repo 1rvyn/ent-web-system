@@ -86,6 +86,7 @@ func MergeProjects(c *fiber.Ctx) error {
 	session, err := database.Redis.GetHMap(sessionCookie)
 	if err != nil {
 		fmt.Println("error getting session from redis")
+		return c.SendStatus(401)
 	}
 
 	// get the user id from the session
@@ -125,11 +126,13 @@ func MergeProjects(c *fiber.Ctx) error {
 		// projIds = append(projIds, projectID)
 	}
 
-	// print all the quotes from the projects array
-
 	var totalOverhead float64 // total overhead for all the projects
 
 	for _, project := range projects {
+		if *project.OwnerID != uint(userIDUint) {
+			fmt.Println("user is not the owner of the project")
+			return c.SendStatus(401)
+		}
 		totalOverhead += project.Overhead
 		fmt.Println("project overhead is: ", project.Overhead, "for project: ", project.Title)
 	}
