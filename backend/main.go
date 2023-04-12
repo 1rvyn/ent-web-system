@@ -129,8 +129,6 @@ func UpdateProject(c *fiber.Ctx) error {
 		return c.Status(400).SendString("Invalid JSON body")
 	}
 
-	project.Title = updateData.Title
-
 	workersChanged := len(project.Workers) != len(updateData.Workers)
 	if !workersChanged {
 		for i, worker := range updateData.Workers {
@@ -140,13 +138,16 @@ func UpdateProject(c *fiber.Ctx) error {
 		}
 	}
 
+	// fmt.Println("aaaa", updateData.NonHumanResources[0].Mode, "EXISTING", project.NonHumanResources[0].Mode)
 	// Compare and update non-human-resources
 	nonHumanResourcesChanged := false
 	if len(project.NonHumanResources) != len(updateData.NonHumanResources) {
 		nonHumanResourcesChanged = true
 	} else {
 		for i, resource := range updateData.NonHumanResources {
-			if project.NonHumanResources[i].Name != resource.Name || project.NonHumanResources[i].Cost != resource.Cost || project.NonHumanResources[i].Mode != resource.Mode {
+			if project.NonHumanResources[i].Name != resource.Name ||
+				project.NonHumanResources[i].Cost != resource.Cost ||
+				project.NonHumanResources[i].Mode != resource.Mode {
 				nonHumanResourcesChanged = true
 				break
 			}
@@ -185,11 +186,12 @@ func UpdateProject(c *fiber.Ctx) error {
 		}
 		// Update project with the new non-human-resources
 		project.NonHumanResources = updateData.NonHumanResources
+
 	}
 
-	if workersChanged || nonHumanResourcesChanged || updateData.Recalculate {
-		project.Workers = updateData.Workers
-		project.NonHumanResources = updateData.NonHumanResources
+	if workersChanged || nonHumanResourcesChanged || project.Title != updateData.Title {
+
+		project.Title = updateData.Title
 
 		models.CalculateOverheadAndQuote(&project)
 
@@ -197,7 +199,9 @@ func UpdateProject(c *fiber.Ctx) error {
 		database.Database.Db.Save(&project)
 	}
 
-	return c.Status(200).JSON(project)
+	response := utils.ProjectToResponse(&project) // prevent user from seeing overhead
+
+	return c.Status(200).JSON(response)
 }
 
 func Logout(c *fiber.Ctx) error {
