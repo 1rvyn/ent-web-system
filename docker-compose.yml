@@ -38,7 +38,7 @@ services:
     command: bash -c "sleep 2 && ./main"
 
   db:
-    image: postgres-db
+    image: postgres
     ports:
       - "5432:5432"
     environment:
