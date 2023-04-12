@@ -73,9 +73,33 @@ func setupRoutes(app *fiber.App) {
 
 	app.Post("/logout", Logout)
 
+	app.Put("/projects/:id", UpdateProject)
+
 	//app.Post("/update-project", UpdateProject)
 }
 
+func UpdateProject(c *fiber.Ctx) error {
+	// get the project id from the url
+	id := c.Params("id")
+
+	fmt.Println("id is", id)
+
+	//// get the project from the request body
+	//var project models.Project
+	//err := json.Unmarshal(c.Body(), &project)
+	//if err != nil {
+	//	return c.Status(400).SendString("error unmarshalling the project")
+	//}
+	//
+	//// get the project from the database
+	//var dbProject models.Project
+	//database.DB.First(&dbProject, id)
+	//
+	//// update the project
+	//
+
+	return c.Status(200).SendString("success")
+}
 func Logout(c *fiber.Ctx) error {
 	fmt.Println("logging out")
 	// validate its a logged in user trying to logout
@@ -114,26 +138,20 @@ func MergeProjects(c *fiber.Ctx) error {
 		return c.SendStatus(401)
 	}
 
-	// search for the session in redis
 	session, err := database.Redis.GetHMap(sessionCookie)
 	if err != nil {
 		fmt.Println("error getting session from redis")
 		return c.SendStatus(401)
 	}
 
-	// get the user id from the session
 	userID := session["user_id"]
 
-	// convert the user id to a uint from string
 	userIDUint, err := strconv.ParseUint(userID, 10, 32)
 	if err != nil {
 		fmt.Println("error converting user id to uint")
 	}
 
 	fmt.Println("user id is: ", userIDUint)
-
-	// get the project ID's from the request body
-	// just sending an array of project ID's
 
 	type ProjectID struct {
 		ProjectIds []int `json:"projectIds"`
@@ -144,22 +162,16 @@ func MergeProjects(c *fiber.Ctx) error {
 		return c.SendStatus(400)
 	}
 
-	// debug print the project ID's
 	fmt.Println("project ID's are: ", request.ProjectIds)
 
-	// for each project ID, get the project from the database
-	// and add the project ID's to an array
 	var projects []models.Project
-	// var projIds []int
 	for _, projectID := range request.ProjectIds {
 		var project models.Project
 		database.Database.Db.First(&project, projectID)
 		projects = append(projects, project)
-		// projIds = append(projIds, projectID)
 	}
 
-	var totalOverhead float64 // total overhead for all the projects
-
+	var totalOverhead float64
 	for _, project := range projects {
 		if *project.OwnerID != uint(userIDUint) {
 			fmt.Println("user is not the owner of the project")
@@ -169,31 +181,35 @@ func MergeProjects(c *fiber.Ctx) error {
 		fmt.Println("project overhead is: ", project.Overhead, "for project: ", project.Title)
 	}
 
-	// make the quote - fudge based on the number of projects
-
-	// total overhead multiplied by 0.89 - 1.11 (fudge factor)
 	quote := totalOverhead * utils.RandomFloat64(0.89, 1.11)
-	fmt.Println("random num", utils.RandomFloat64(0.89, 1.11))
-
+	// fmt.Println("random num", utils.RandomFloat64(0.89, 1.11))
 	fmt.Println("quote we made", quote)
 
-	var mergedQuote models.MergedQuotes
+	// Create a new project
+	var newProject models.Project
+	newProject.OwnerID = new(uint)         // initialize a new *uint
+	*newProject.OwnerID = uint(userIDUint) // assign the value
+	newProject.Overhead = totalOverhead
+	newProject.Quote = quote
 
-	// create a new merged quote
-	mergedQuote.OwnerID = uint(userIDUint)
-	mergedQuote.Overhead = totalOverhead
-	mergedQuote.Quote = quote
+	// super inefficient way of doing this - making a json array of project IDs
+	subTaskIDsJSON := []uint{}
+	for _, project := range projects {
+		subTaskIDsJSON = append(subTaskIDsJSON, project.ID)
+	}
+	subTaskIDsJSONBytes, err := json.Marshal(subTaskIDsJSON)
+	if err != nil {
+		return c.Status(500).SendString("Failed to marshal subtask IDs")
+	}
+	newProject.SubTaskIDs = json.RawMessage(subTaskIDsJSONBytes)
 
-	fmt.Println(mergedQuote)
+	// Save the new project to the database
+	database.Database.Db.Create(&newProject)
 
-	// save the merged quote to the database
-	database.Database.Db.Create(&mergedQuote)
-
-	// round the quote to 2 decimal places
 	return c.Status(200).JSON(fiber.Map{
-		"MergedQuote": quote,
+		"MergedQuote":  quote,
+		"NewProjectID": newProject.ID,
 	})
-
 }
 
 func DeleteProject(c *fiber.Ctx) error {
@@ -296,31 +312,62 @@ func RetrieveProjects(c *fiber.Ctx) error {
 
 	userID := session["user_id"]
 
-	// convert the user id to a uint from string
-	userIDUint, err := strconv.ParseUint(userID, 10, 32)
-	if err != nil {
-		fmt.Println("error converting user id to uint")
+	if session["user_role"] == "2" {
+		fmt.Println("user is an admin")
+		userIDUint, err := strconv.ParseUint(userID, 10, 32)
+		if err != nil {
+			fmt.Println("error converting user id to uint")
+		}
+
+		fmt.Println("getting projects for the user with the ID of: ", userIDUint)
+
+		// Get the projects from the database
+		var projects []models.Project
+		database.Database.Db.Preload("Workers").Preload("NonHumanResources").Where("owner_id = ?", userIDUint).Find(&projects)
+
+		// // Create a slice to store the project responses
+		// var projectResponses []utils.ProjectResponse
+
+		// // Loop through the projects and convert each project to a ProjectResponse
+		// for _, project := range projects {
+		// 	projectResponse := utils.ProjectToResponse(&project)
+		// 	projectResponses = append(projectResponses, projectResponse)
+		// }
+
+		return c.JSON(fiber.Map{
+			"message":  "success",
+			"projects": projects,
+		})
+	} else {
+
+		// convert the user id to a uint from string
+		userIDUint, err := strconv.ParseUint(userID, 10, 32)
+		if err != nil {
+			fmt.Println("error converting user id to uint")
+		}
+
+		fmt.Println("getting projects for the user with the ID of: ", userIDUint)
+
+		// Get the projects from the database
+		var projects []models.Project
+		database.Database.Db.Preload("Workers").Preload("NonHumanResources").Where("owner_id = ?", userIDUint).Find(&projects)
+
+		// Create a slice to store the project responses
+		var projectResponses []utils.ProjectResponse
+
+		// Loop through the projects and convert each project to a ProjectResponse
+		for _, project := range projects {
+			projectResponse := utils.ProjectToResponse(&project)
+			projectResponses = append(projectResponses, projectResponse)
+		}
+
+		fmt.Println("projects", projectResponses)
+
+		return c.JSON(fiber.Map{
+			"message":  "success",
+			"projects": projectResponses,
+		})
 	}
-
-	fmt.Println("getting projects for the user with the ID of: ", userIDUint)
-
-	// Get the projects from the database
-	var projects []models.Project
-	database.Database.Db.Preload("Workers").Preload("NonHumanResources").Where("owner_id = ?", userIDUint).Find(&projects)
-
-	// Create a slice to store the project responses
-	var projectResponses []utils.ProjectResponse
-
-	// Loop through the projects and convert each project to a ProjectResponse
-	for _, project := range projects {
-		projectResponse := utils.ProjectToResponse(&project)
-		projectResponses = append(projectResponses, projectResponse)
-	}
-
-	return c.JSON(fiber.Map{
-		"message":  "success",
-		"projects": projectResponses,
-	})
 }
 
 //func UpdateProject(c *fiber.Ctx) error {

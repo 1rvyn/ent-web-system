@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"enterpriseweb/models"
 )
 
@@ -12,6 +13,7 @@ type ProjectResponse struct {
 	NonHumanResources []models.NonHumanResource `json:"nonHumanResources"`
 	Quote             float64                   `json:"quote"`
 	OwnerID           *uint                     `json:"owner_id"`
+	SubTaskIDs        json.RawMessage           `json:"subTaskIDs"`
 }
 
 type ProjectWorkerResponse struct {
@@ -50,5 +52,6 @@ func ProjectToResponse(project *models.Project) ProjectResponse {
 		NonHumanResources: project.NonHumanResources,
 		Quote:             project.Quote,
 		OwnerID:           project.OwnerID,
+		SubTaskIDs:        project.SubTaskIDs,
 	}
 }

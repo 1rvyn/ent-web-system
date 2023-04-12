@@ -16,6 +16,7 @@ type Project struct {
 	Overhead          float64            `json:"overhead"` // real cost
 	Quote             float64            `json:"quote"`    // fudge factor adjusted cost
 	OwnerID           *uint              `json:"owner_id"` // we use a pointer to allow for null values
+	SubTaskIDs        json.RawMessage    `json:"subTaskIDs" gorm:"type:jsonb"`
 }
 
 type ProjectWorker struct {

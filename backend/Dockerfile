@@ -11,7 +11,6 @@ ENV SECRET_KEY=$SECRET_KEY \
     SALT=$SALT \
     REDIS_KEY=$REDIS_KEY 
 
-    
 # Build the Go API
 RUN go build -o main .
 
