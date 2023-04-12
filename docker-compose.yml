@@ -5,13 +5,13 @@ services:
     image: containrrr/watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    command: --interval 300 --cleanup backend frontend db redis
+    command: --interval 300 --cleanup frontend backend db redis
   frontend:
-    build: ./frontend
+    build: .
     ports:
       - "5173:5173"
     env_file:
-      - ./frontend/frontend.env
+      - ./frontend.env
     networks:
       shared:
         aliases:
