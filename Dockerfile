@@ -4,7 +4,7 @@ FROM node:16-alpine
 # Set the working directory to the app directory
 WORKDIR /app
 
-# Copy the app source code to the container
+# Copy the app source code to the container, excluding the /backend folder specified in the .dockerignore file
 COPY . .
 
 # Install app dependencies
