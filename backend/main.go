@@ -84,22 +84,122 @@ func UpdateProject(c *fiber.Ctx) error {
 
 	fmt.Println("id is", id)
 
-	//// get the project from the request body
-	//var project models.Project
-	//err := json.Unmarshal(c.Body(), &project)
-	//if err != nil {
-	//	return c.Status(400).SendString("error unmarshalling the project")
-	//}
-	//
-	//// get the project from the database
-	//var dbProject models.Project
-	//database.DB.First(&dbProject, id)
-	//
-	//// update the project
-	//
+	// get the users session
+	sessionCookie := c.Cookies("session")
 
-	return c.Status(200).SendString("success")
+	if sessionCookie == "" {
+		fmt.Println("no session cookie")
+		return c.SendStatus(401)
+	}
+
+	session, err := database.Redis.GetHMap(sessionCookie)
+	if err != nil {
+		fmt.Println("error getting session from redis")
+		return c.SendStatus(401)
+	}
+
+	fmt.Println("session is", session)
+
+	userID := session["user_id"]
+
+	fmt.Println("user id is", userID)
+
+	userIDUint, err := strconv.ParseUint(userID, 10, 32)
+	if err != nil {
+		fmt.Println("error converting user id to uint")
+	}
+
+	// verify user owns the project
+	var project models.Project
+	database.Database.Db.Preload("Workers").Preload("NonHumanResources").First(&project, id)
+
+	fmt.Println("existing workers rates: ", project.Workers)
+
+	if *project.OwnerID != uint(userIDUint) {
+		return c.Status(401).SendString("user does not own project")
+	}
+
+	// update the project
+
+	var updateData models.UpdateProjectData
+
+	// Parse the JSON body into the updateData instance
+	if err := json.Unmarshal(c.Body(), &updateData); err != nil {
+		fmt.Println("error parsing JSON body")
+		return c.Status(400).SendString("Invalid JSON body")
+	}
+
+	project.Title = updateData.Title
+
+	workersChanged := len(project.Workers) != len(updateData.Workers)
+	if !workersChanged {
+		for i, worker := range updateData.Workers {
+			if project.Workers[i].Type != worker.Type || project.Workers[i].NumWorkers != worker.NumWorkers || project.Workers[i].NumHours != worker.NumHours {
+				workersChanged = true
+			}
+		}
+	}
+
+	// Compare and update non-human-resources
+	nonHumanResourcesChanged := false
+	if len(project.NonHumanResources) != len(updateData.NonHumanResources) {
+		nonHumanResourcesChanged = true
+	} else {
+		for i, resource := range updateData.NonHumanResources {
+			if project.NonHumanResources[i].Name != resource.Name || project.NonHumanResources[i].Cost != resource.Cost || project.NonHumanResources[i].Mode != resource.Mode {
+				nonHumanResourcesChanged = true
+				break
+			}
+		}
+	}
+	if workersChanged {
+		database.Database.Db.Delete(&models.ProjectWorker{}, "project_id = ?", project.ID)
+
+		// Update workers with the rate from the original project's workers
+		for i, worker := range updateData.Workers {
+			for _, existingWorker := range project.Workers {
+				if worker.Type == existingWorker.Type {
+					updateData.Workers[i].Rate = existingWorker.Rate
+					break
+				}
+			}
+		}
+
+		// Add updated workers
+		for _, worker := range updateData.Workers {
+			worker.ProjectID = project.ID
+			database.Database.Db.Create(&worker)
+		}
+		// Update project with the new workers
+		project.Workers = updateData.Workers
+	}
+
+	if nonHumanResourcesChanged {
+		// Delete existing non-human-resources
+		database.Database.Db.Delete(&models.NonHumanResource{}, "project_id = ?", project.ID)
+
+		// Add updated non-human-resources
+		for _, resource := range updateData.NonHumanResources {
+			resource.ProjectID = project.ID
+			database.Database.Db.Create(&resource)
+		}
+		// Update project with the new non-human-resources
+		project.NonHumanResources = updateData.NonHumanResources
+	}
+
+	if workersChanged || nonHumanResourcesChanged || updateData.Recalculate {
+		project.Workers = updateData.Workers
+		project.NonHumanResources = updateData.NonHumanResources
+
+		models.CalculateOverheadAndQuote(&project)
+
+		// Save the updated project to the database
+		database.Database.Db.Save(&project)
+	}
+
+	return c.Status(200).JSON(project)
 }
+
 func Logout(c *fiber.Ctx) error {
 	fmt.Println("logging out")
 	// validate its a logged in user trying to logout

@@ -36,12 +36,21 @@ type NonHumanResource struct {
 	ProjectID uint   `json:"projectId" gorm:"column:project_id"`
 }
 
+type UpdateProjectData struct {
+	Title             string             `json:"title"`
+	Workers           []ProjectWorker    `json:"workers"`
+	NonHumanResources []NonHumanResource `json:"nonHumanResources"`
+	Recalculate       bool               `json:"recalculate"` // Add this field
+
+}
+
 //func (pw *ProjectWorker) BeforeCreate(tx *gorm.DB) (err error) {
 //	pw.setBaseRate()
 //	return
 //}
 
-func (pw *ProjectWorker) setBaseRate() {
+func (pw *ProjectWorker) SetBaseRate() {
+	fmt.Println("Setting base rate for worker: " + pw.Type)
 	switch pw.Type {
 	case "intern":
 		pw.Rate = 15
@@ -75,7 +84,7 @@ func (p *Project) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(raw, &worker); err != nil {
 			return err
 		}
-		worker.setBaseRate() // Set the worker rate here
+		worker.SetBaseRate() // Set the worker rate here
 		p.Workers = append(p.Workers, worker)
 	}
 	for _, raw := range aux.NonHumanResources {
@@ -98,6 +107,7 @@ func CalculateOverheadAndQuote(project *Project) {
 
 	totalWorkers := 0
 	for _, worker := range project.Workers {
+		fmt.Println("the worker count is: ", worker.NumWorkers)
 		totalWorkers += worker.NumWorkers
 		workerCost := float64(worker.NumWorkers) * worker.NumHours * worker.Rate
 		fmt.Println("the worker rate is: " + fmt.Sprintf("%f", worker.Rate))
@@ -120,6 +130,8 @@ func CalculateOverheadAndQuote(project *Project) {
 	}
 
 	for _, resource := range project.NonHumanResources {
+		fmt.Println("the resource mode is: ", resource.Mode)
+		fmt.Println("the cost is: ", resource.Cost)
 		if resource.Mode == "daily" {
 			overhead += float64(resource.Cost) * 30
 			quote += float64(resource.Cost) * 30
@@ -138,4 +150,6 @@ func CalculateOverheadAndQuote(project *Project) {
 
 	project.Overhead = overhead
 	project.Quote = quote
+	fmt.Println("the overhead is: " + fmt.Sprintf("%f", overhead))
+	fmt.Println("the quote is: " + fmt.Sprintf("%f", quote))
 }
