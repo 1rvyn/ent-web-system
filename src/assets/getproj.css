@@ -5,6 +5,40 @@
     margin-top: 80px;
 }
 
+
+.minified-project-card {
+    background-color: #242424;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin: 5px;
+    padding: 0.5rem;
+    color: rgba(255, 255, 255, 0.87);
+    font-size: 14px;
+}
+
+.minified-project-card h4 {
+    font-size: 14px;
+    margin: 0 0 5px;
+}
+
+.minified-project-card p {
+    font-size: 12px;
+    margin: 0;
+    margin-bottom: 0.25rem;
+}
+
+.edit-button {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+}
+
+.cancel-button {
+    position: absolute;
+    top: 5px;
+    left: 75px;
+}
+
 .delete-button {
     position: absolute;
     top: 10px;
