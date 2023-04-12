@@ -117,24 +117,25 @@ function Getprojs(props) {
     const updateProject = async (projectId, title, workers, nonHumanResources) => {
         console.log('Updating project with ID:', projectId)
         console.log('New project title:', title, 'New workers:', workers, 'New non-human resources:', nonHumanResources)
-        const response = await fetch(`localhost:8085/projects/${projectId}`, {
+        const response = await fetch(`http://localhost:8085/projects/${projectId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
+            mode: 'cors',
+            credentials: 'include',
             body: JSON.stringify({
                 title,
                 workers,
                 nonHumanResources
             })
         });
-
-
-
+        
         if (response.ok) {
             // If the update was successful, update the UI
             // You can fetch the updated list of projects or update the local state
             const updatedProject = await response.json();
+            console.log('Updated project:', updatedProject)
             setProjects((prevProjects) =>
                 prevProjects.map((project) => (project.id === projectId ? updatedProject : project))
             );
