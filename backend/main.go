@@ -93,7 +93,54 @@ func setupRoutes(app *fiber.App) {
 
 	app.Put("/projects/:id", UpdateProject)
 
+	app.Post("/update-worker-rate", UpdateWorkerRate)
+
 	//app.Post("/update-project", UpdateProject)
+}
+
+func UpdateWorkerRate(c *fiber.Ctx) error {
+	fmt.Println("UpdateWorkerRate endpoint hit")
+
+	// Retrieve user ID
+	sessionCookie := c.Cookies("session")
+
+	if sessionCookie == "" {
+		return c.SendStatus(401)
+	}
+
+	// search for the session in redis
+	session, err := database.Redis.GetHMap(sessionCookie)
+	if err != nil {
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": "failed to get session",
+		})
+	}
+
+	if session["user_role"] == "2" {
+		fmt.Println("user is an admin")
+
+		// Parse the JSON body - its just 3 numbers
+		var updateData models.UpdateRate
+
+		// Parse the JSON body into the updateData instance
+		if err := json.Unmarshal(c.Body(), &updateData); err != nil {
+			fmt.Println("error parsing JSON body")
+			return c.Status(400).SendString("error parsing JSON body")
+		}
+
+		fmt.Println("update data is", updateData)
+
+		// update the workers rate from the database
+
+		return c.SendStatus(200)
+
+		// Get the projects from the database
+
+	} else {
+		return c.SendStatus(401)
+	}
+
 }
 
 func UpdateProject(c *fiber.Ctx) error {

@@ -44,6 +44,11 @@ type UpdateProjectData struct {
 
 }
 
+type UpdateRate struct {
+	ProjectID string          `json:"projectId"`
+	Workers   []ProjectWorker `json:"workerUpdates"`
+}
+
 //func (pw *ProjectWorker) BeforeCreate(tx *gorm.DB) (err error) {
 //	pw.setBaseRate()
 //	return

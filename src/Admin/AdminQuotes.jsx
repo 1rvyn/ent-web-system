@@ -5,6 +5,24 @@ function AdminQuotes(props) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasLoadedProjects, setHasLoadedProjects] = useState(false);
 
+    const [editingWorkerRate, setEditingWorkerRate] = useState(null);
+    const [workerRateUpdates, setWorkerRateUpdates] = useState([]);
+
+    const updateWorkerRate = (workerId, newRate) => {
+        setWorkerRateUpdates((prevWorkerRateUpdates) => {
+            const existingIndex = prevWorkerRateUpdates.findIndex((update) => update.workerId === workerId);
+            if (existingIndex !== -1) {
+                return prevWorkerRateUpdates.map((update) =>
+                    update.workerId === workerId ? { workerId, newRate } : update,
+                );
+            } else {
+                return [...prevWorkerRateUpdates, { workerId, newRate }];
+            }
+        });
+    };
+    
+
+
     const fetchProjects = async () => {
         setIsSubmitting(true);
 
@@ -34,6 +52,42 @@ function AdminQuotes(props) {
         }
     };
 
+    const handleRateChange = async (e, projectId, workerUpdates) => {
+        const newRate = parseFloat(e.target.value);
+        if (isNaN(newRate)) {
+            alert('Invalid rate value');
+            return;
+        }
+        console.log('Updating worker rate for worker ID', workerId, 'in project ID', projectId, 'to', newRate)
+    
+        try {
+            const response = await fetch(`http://localhost:8085/update-worker-rate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                mode: 'cors',
+                credentials: 'include',
+                body: JSON.stringify({ projectId, workerUpdates }),
+            });
+    
+            if (!response.ok) {
+                throw new Error('Failed to update worker rate');
+            }
+    
+            const data = await response.json();
+            console.log('Worker rate update response:', data);
+    
+            // Replace the local project with the updated project from the backend
+            const updatedProject = data.project;
+            setProjects((prevProjects) =>
+                prevProjects.map((project) => (project.id === projectId ? updatedProject : project)),
+            );
+        } catch (error) {
+            console.error(`Failed to update worker rate for worker ID ${workerId} in project ID ${projectId}:`, error);
+        }
+    };
+    
     const ConfirmDelete = ({ projectId, onDelete }) => {
         const [isConfirming, setIsConfirming] = useState(false);
 
@@ -43,6 +97,7 @@ function AdminQuotes(props) {
             }
             setIsConfirming(!isConfirming);
         };
+
 
         return (
             <button className="delete-button" onClick={handleDeleteClick}>
@@ -110,6 +165,9 @@ function AdminQuotes(props) {
                         <p>Fudge Quote: £{project.quote.toFixed(2) !== null ? project.quote.toFixed(2) : 'No quote available.'}</p>
                         <p>Overhead: £{project.overhead.toFixed(2) !== null ? project.overhead.toFixed(2) : 'No quote available.'}</p>
 
+                        <button onClick={(e) => handleRateChange(e, project.id, workerRateUpdates)}>
+                                    Update Worker Rates
+                        </button>
                         <div className="workers-container">
                             <h4>Workers</h4>
                             {(project.workers || []).map((worker, idx) => (
@@ -120,6 +178,20 @@ function AdminQuotes(props) {
                                     <p>Rate: £{worker.rate.toFixed(2)}</p>
                                 </div>
                             ))}
+                            <p>Rate: £
+                                {editingWorkerRate === worker.id ? (
+                                    <input
+                                        id={`worker-rate-${project.id}-${idx}`}
+                                        type="number"
+                                        defaultValue={worker.rate.toFixed(2)}
+                                        onBlur={(e) => updateWorkerRate(worker.id, parseFloat(e.target.value))}
+
+                                    />
+                                ) : (
+                                    worker.rate.toFixed(2)
+                                )}
+                            
+                            </p>
                         </div>
                         <div className="non-human-resources-container">
                             <h4>Non-Human Resources</h4>
