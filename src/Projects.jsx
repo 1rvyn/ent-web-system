@@ -263,10 +263,10 @@ function Projects(props) {
               </div>
 
               <div className="created-quotes">
-                <h3>Created Quote:</h3>
+                <h3>Previously Created Quotes:</h3>
                 <ul>
                   {createdQuotes.map((quote, index) => (
-                      <li key={index}>{quote}</li>
+                    <li key={index}>Monthly Quote: £{quote}</li>
                   ))}
                 </ul>
               </div>

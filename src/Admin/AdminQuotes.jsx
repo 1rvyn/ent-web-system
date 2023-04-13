@@ -117,6 +117,7 @@ function AdminQuotes(props) {
                                     <p>Type: {worker.type}</p>
                                     <p>Number of workers: {worker.numWorkers}</p>
                                     <p>Weekly Hours: {worker.numHours}</p>
+                                    <p>Rate: £{worker.rate.toFixed(2)}</p>
                                 </div>
                             ))}
                         </div>

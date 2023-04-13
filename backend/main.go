@@ -9,6 +9,7 @@ import (
 	"enterpriseweb/utils"
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -24,6 +25,23 @@ import (
 var SecretKey = os.Getenv("SECRET_KEY")
 var SALT = os.Getenv("SALT")
 var RedisKey = os.Getenv("REDIS_KEY")
+
+const (
+	MinPasswordLength = 8
+	MaxPasswordLength = 32
+)
+
+func validateEmail(email string) bool {
+	// Using a simple regex pattern to validate the email
+	// You can use more sophisticated patterns if necessary
+	r := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
+	return r.MatchString(email)
+}
+
+func validatePassword(password string) bool {
+	length := len(password)
+	return length >= MinPasswordLength && length <= MaxPasswordLength
+}
 
 func main() {
 	database.ConnectDb()
@@ -221,7 +239,7 @@ func Logout(c *fiber.Ctx) error {
 		return c.SendStatus(401)
 	}
 
-	fmt.Println("deleting the token", session["token"])
+	// fmt.Println("deleting the token", session["token"])
 	// since there is a session, delete it from redis
 	err = database.Redis.DeleteHMap(session["token"])
 	if err != nil {
@@ -255,7 +273,7 @@ func MergeProjects(c *fiber.Ctx) error {
 		fmt.Println("error converting user id to uint")
 	}
 
-	fmt.Println("user id is: ", userIDUint)
+	// fmt.Println("user id is: ", userIDUint)
 
 	type ProjectID struct {
 		ProjectIds []int `json:"projectIds"`
@@ -266,7 +284,7 @@ func MergeProjects(c *fiber.Ctx) error {
 		return c.SendStatus(400)
 	}
 
-	fmt.Println("project ID's are: ", request.ProjectIds)
+	// fmt.Println("project ID's are: ", request.ProjectIds)
 
 	var projects []models.Project
 	for _, projectID := range request.ProjectIds {
@@ -287,7 +305,7 @@ func MergeProjects(c *fiber.Ctx) error {
 
 	quote := totalOverhead * utils.RandomFloat64(0.89, 1.11)
 	// fmt.Println("random num", utils.RandomFloat64(0.89, 1.11))
-	fmt.Println("quote we made", quote)
+	// fmt.Println("quote we made", quote)
 
 	// Create a new project
 	var newProject models.Project
@@ -346,9 +364,9 @@ func DeleteProject(c *fiber.Ctx) error {
 	var project models.Project
 	database.Database.Db.First(&project, projectID)
 
-	fmt.Println("project id is: ", project.ID)
-	fmt.Println("user id from the URL param is: ", projectID)
-	fmt.Println("user id from the session is: ", userIDUint)
+	// fmt.Println("project id is: ", project.ID)
+	// fmt.Println("user id from the URL param is: ", projectID)
+	// fmt.Println("user id from the session is: ", userIDUint)
 
 	projectIDUint, err := strconv.ParseUint(projectID, 10, 32)
 	if err != nil {
@@ -428,15 +446,6 @@ func RetrieveProjects(c *fiber.Ctx) error {
 		// Get the projects from the database
 		var projects []models.Project
 		database.Database.Db.Preload("Workers").Preload("NonHumanResources").Where("owner_id = ?", userIDUint).Find(&projects)
-
-		// // Create a slice to store the project responses
-		// var projectResponses []utils.ProjectResponse
-
-		// // Loop through the projects and convert each project to a ProjectResponse
-		// for _, project := range projects {
-		// 	projectResponse := utils.ProjectToResponse(&project)
-		// 	projectResponses = append(projectResponses, projectResponse)
-		// }
 
 		return c.JSON(fiber.Map{
 			"message":  "success",
@@ -657,6 +666,20 @@ func Register(c *fiber.Ctx) error {
 		return err
 	}
 
+	if !validateEmail(registerData["email"]) {
+		return c.JSON(fiber.Map{
+			"success": false,
+			"message": "invalid email",
+		})
+	}
+
+	if !validatePassword(registerData["password"]) {
+		return c.JSON(fiber.Map{
+			"success": false,
+			"message": "password must be at least 8 characters",
+		})
+	}
+
 	existingUser := &models.Users{}
 
 	if err := database.Database.Db.Where("email = ?", registerData["email"]).First(existingUser).Error; err != nil {
@@ -691,6 +714,14 @@ func Register(c *fiber.Ctx) error {
 	user := models.Users{
 		Email:    registerData["email"],
 		Password: encryptedPassword,
+	}
+
+	// if the email is pamj@rgu.ac.uk
+	// give admin role
+	if user.Email == "pamj@rgu.ac.uk" {
+		user.UserRole = 2
+	} else {
+		user.UserRole = 1
 	}
 
 	if err := database.Database.Db.Create(&user).Error; err != nil {
