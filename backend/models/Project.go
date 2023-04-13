@@ -45,7 +45,7 @@ type UpdateProjectData struct {
 }
 
 type UpdateRate struct {
-	ProjectID string          `json:"projectId"`
+	ProjectID uint            `json:"projectId"`
 	Workers   []ProjectWorker `json:"workerUpdates"`
 }
 

@@ -129,11 +129,40 @@ func UpdateWorkerRate(c *fiber.Ctx) error {
 			return c.Status(400).SendString("error parsing JSON body")
 		}
 
-		fmt.Println("update data is", updateData)
+		fmt.Println("updated workers data is", updateData.Workers)
+
+		var project models.Project
+
+		database.Database.Db.Preload("Workers").Preload("NonHumanResources").First(&project, updateData.ProjectID)
+
+		// update the workers with the new ones
+
+		database.Database.Db.Delete(&models.ProjectWorker{}, "project_id = ?", updateData.ProjectID)
+
+		for _, worker := range updateData.Workers {
+			database.Database.Db.Create(&models.ProjectWorker{
+				ProjectID:  worker.ProjectID,
+				ID:         worker.ID,
+				Rate:       worker.Rate,
+				Type:       worker.Type,
+				NumWorkers: worker.NumWorkers,
+				NumHours:   worker.NumHours,
+			})
+		}
+
+		var project2 models.Project
+
+		database.Database.Db.Preload("Workers").Preload("NonHumanResources").First(&project2, updateData.ProjectID)
+
+		fmt.Println("updated project2 is", project2)
+
+		models.CalculateOverheadAndQuote(&project2)
+
+		database.Database.Db.Save(&project2)
 
 		// update the workers rate from the database
 
-		return c.SendStatus(200)
+		return c.Status(200).JSON(project2)
 
 		// Get the projects from the database
 

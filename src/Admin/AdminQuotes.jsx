@@ -52,14 +52,19 @@ function AdminQuotes(props) {
         }
     };
 
-    const handleRateChange = async (e, projectId, workerUpdates) => {
-        const newRate = parseFloat(e.target.value);
-        if (isNaN(newRate)) {
-            alert('Invalid rate value');
-            return;
-        }
-        console.log('Updating worker rate for worker ID', workerId, 'in project ID', projectId, 'to', newRate)
-    
+    const handleRateChange = async (projectId) => {
+
+        const currentProject = projects.find((project) => project.id === projectId);
+
+        const updatedWorkers = currentProject.workers.map((worker) => {
+            const newRate = workerRateUpdates.find(update => update.workerId === worker.id)?.newRate || worker.rate;
+            return {
+                ...worker,
+                rate: newRate,
+            };
+        });
+          
+        console.log(JSON.stringify({ projectId, workerUpdates: updatedWorkers }))
         try {
             const response = await fetch(`http://localhost:8085/update-worker-rate`, {
                 method: 'POST',
@@ -68,7 +73,7 @@ function AdminQuotes(props) {
                 },
                 mode: 'cors',
                 credentials: 'include',
-                body: JSON.stringify({ projectId, workerUpdates }),
+                body: JSON.stringify({ projectId, workerUpdates: updatedWorkers }),
             });
     
             if (!response.ok) {
@@ -81,7 +86,7 @@ function AdminQuotes(props) {
             // Replace the local project with the updated project from the backend
             const updatedProject = data.project;
             setProjects((prevProjects) =>
-                prevProjects.map((project) => (project.id === projectId ? updatedProject : project)),
+                prevProjects.map((project) => (project.id === projectId ? updatedProject : project))
             );
         } catch (error) {
             console.error(`Failed to update worker rate for worker ID ${workerId} in project ID ${projectId}:`, error);
@@ -154,7 +159,7 @@ function AdminQuotes(props) {
                 {isSubmitting ? 'Loading...' : 'Load Projects'}
             </button>
             <div className="projects-container">
-                {projects.map((project, index) => (
+            {projects.filter(project => !!project).map((project, index) => (
                     <div
                         key={index}
                         className="project-card"
@@ -165,33 +170,43 @@ function AdminQuotes(props) {
                         <p>Fudge Quote: £{project.quote.toFixed(2) !== null ? project.quote.toFixed(2) : 'No quote available.'}</p>
                         <p>Overhead: £{project.overhead.toFixed(2) !== null ? project.overhead.toFixed(2) : 'No quote available.'}</p>
 
-                        <button onClick={(e) => handleRateChange(e, project.id, workerRateUpdates)}>
-                                    Update Worker Rates
+                        <button onClick={() => handleRateChange(project.id)}>
+                            Update Worker Rates
                         </button>
+
+
                         <div className="workers-container">
                             <h4>Workers</h4>
                             {(project.workers || []).map((worker, idx) => (
-                                <div key={idx} className="worker-info">
-                                    <p>Type: {worker.type}</p>
-                                    <p>Number of workers: {worker.numWorkers}</p>
-                                    <p>Weekly Hours: {worker.numHours}</p>
-                                    <p>Rate: £{worker.rate.toFixed(2)}</p>
-                                </div>
-                            ))}
-                            <p>Rate: £
-                                {editingWorkerRate === worker.id ? (
-                                    <input
-                                        id={`worker-rate-${project.id}-${idx}`}
+                            <div key={idx} className="worker-info">
+                                <p>Type: {worker.type}</p>
+                                <p>Number of workers: {worker.numWorkers}</p>
+                                <p>Weekly Hours: {worker.numHours}</p>
+                                {/* <p>Rate: £{worker.rate.toFixed(2)}</p> */}
+                                <p>Rate: £
+                                    {editingWorkerRate === worker.id ? (
+                                        <input
+                                        id={`worker-rate-${project.id}-${worker.id}`}
                                         type="number"
                                         defaultValue={worker.rate.toFixed(2)}
-                                        onBlur={(e) => updateWorkerRate(worker.id, parseFloat(e.target.value))}
-
+                                        onBlur={(e) => {
+                                            setEditingWorkerRate(null);
+                                            updateWorkerRate(worker.id, parseFloat(e.target.value));
+                                        }}
                                     />
-                                ) : (
-                                    worker.rate.toFixed(2)
-                                )}
+                                    
+                                    ) : (
+                                        <span
+                                            onClick={() => setEditingWorkerRate(worker.id)}
+                                        >
+                                            {worker.rate.toFixed(2)}
+                                        </span>
+                                    )}
+                                </p>
+                            </div>
+                        ))}
+
                             
-                            </p>
                         </div>
                         <div className="non-human-resources-container">
                             <h4>Non-Human Resources</h4>
