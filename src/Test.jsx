@@ -10,7 +10,7 @@ function Test(props) {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:8085/test', {
+      const response = await fetch('https://irvyn.love/test', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

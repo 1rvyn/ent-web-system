@@ -27,7 +27,7 @@ function AdminQuotes(props) {
         setIsSubmitting(true);
 
         try {
-            const response = await fetch('http://localhost:8085/get-projects', {
+            const response = await fetch('https://irvyn.love/get-projects', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -66,7 +66,7 @@ function AdminQuotes(props) {
           
         console.log(JSON.stringify({ projectId, workerUpdates: updatedWorkers }))
         try {
-            const response = await fetch(`http://localhost:8085/update-worker-rate`, {
+            const response = await fetch(`https://irvyn.love/update-worker-rate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ function AdminQuotes(props) {
     async function sendDelete(id) {
         console.log('Deleting project with ID:', id)
         try {
-            const response = await fetch(`http://localhost:8085/delete-project/${id}`, {
+            const response = await fetch(`https://irvyn.love/delete-project/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

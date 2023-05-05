@@ -47,7 +47,7 @@ function Getprojs(props) {
         console.log("projects are ", Array.from(selectedProjects))
 
         try {
-            const response = await fetch('http://localhost:8085/merge-projects', {
+            const response = await fetch('https://irvyn.love/merge-projects', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -83,7 +83,7 @@ function Getprojs(props) {
         setIsSubmitting(true);
 
         try {
-            const response = await fetch('http://localhost:8085/get-projects', {
+            const response = await fetch('https://irvyn.love/get-projects', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -117,7 +117,7 @@ function Getprojs(props) {
     const updateProject = async (projectId, title, workers, nonHumanResources) => {
         console.log('Updating project with ID:', projectId)
         console.log('New project title:', title, 'New workers:', workers, 'New non-human resources:', nonHumanResources)
-        const response = await fetch(`http://localhost:8085/projects/${projectId}`, {
+        const response = await fetch(`https://irvyn.love/projects/${projectId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -201,7 +201,7 @@ function Getprojs(props) {
       async function sendDelete(id) {
         console.log('Deleting project with ID:', id)
         try {
-          const response = await fetch(`http://localhost:8085/delete-project/${id}`, {
+          const response = await fetch(`https://irvyn.love/delete-project/${id}`, {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
