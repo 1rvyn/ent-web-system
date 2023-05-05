@@ -12,7 +12,7 @@ function Login() {
   const handleSubmit = (event) => {
     event.preventDefault();
     setIsLoading(true);
-    fetch('http://localhost:8085/login', {
+    fetch('https://irvyn.love/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
