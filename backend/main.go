@@ -55,7 +55,7 @@ func main() {
 	})
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:5173", // Replace with your React app's URL
+		AllowOrigins:     "http://localhost:5173, https://irvyn.love", // add new URL here
 		AllowHeaders:     "Origin, Content-Type, Accept, Set-Cookie, Cookie , Content-Type",
 		AllowMethods:     "POST, OPTIONS, GET, PUT, DELETE, PREFLIGHT",
 		AllowCredentials: true,
@@ -117,6 +117,7 @@ func UpdateWorkerRate(c *fiber.Ctx) error {
 		})
 	}
 
+	// session is a reids hash map which the user never sees
 	if session["user_role"] == "2" {
 		fmt.Println("user is an admin")
 
@@ -167,6 +168,7 @@ func UpdateWorkerRate(c *fiber.Ctx) error {
 		// Get the projects from the database
 
 	} else {
+		// even if they get to access an admin endpoint they will get a 401 since their session will always be a users session - never gets sent
 		return c.SendStatus(401)
 	}
 
@@ -885,7 +887,7 @@ func Login(c *fiber.Ctx) error {
 				Issuer:    string(rune(user.ID)),
 				ExpiresAt: time.Now().Add(time.Hour * 24).Unix(), //1 day
 			}).SignedString([]byte(RedisKey))
-
+			// they never get this token but we use it to validate their session
 			if err != nil {
 				c.Status(fiber.StatusInternalServerError)
 				return c.JSON(fiber.Map{
