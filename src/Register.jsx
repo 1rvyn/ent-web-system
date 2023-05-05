@@ -16,7 +16,7 @@ function Register() {
       return;
     }
 
-    fetch('https://irvyn.love/register', {
+    fetch('http://localhost:8085/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -81,7 +81,7 @@ function Projects(props) {
     console.log("New project:", JSON.stringify(projectToCreate));
 
     try {
-      const response = await fetch('https://irvyn.love/projects', {
+      const response = await fetch('http://localhost:8085/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
